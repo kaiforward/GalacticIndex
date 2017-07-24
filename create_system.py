@@ -61,6 +61,148 @@ class Planet(object):  # Planet class creates all variables for individual plane
             current_habitable = "Inhabitable"
         return current_climate, current_habitable
 
+    def add_minerals(self, element_rarity):
+
+            # imports the mineral rarity variables to be used later on
+            gas_rarity = element_rarity[0]
+            liquid_rarity = element_rarity[1]
+            solid_rarity = element_rarity[2]
+            all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
+
+            # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
+            low_chance = 45
+            high_chance = 55
+
+
+            # finds the current climate and adds a climate modifier to results of mineral production
+            # there maybe a better way of doing this???
+            current_climate = self.climate
+            climate_modifier = [1, 1, 1]
+            # climate modifier where 0, 1 and 2 of array are gas, liquid, solid respectively
+            if current_climate == "Tropical":  # higher levels of gas
+                climate_modifier[0] = 1.5
+            elif current_climate == 'Oceanic':  # much higher levels of water, less solid
+                climate_modifier[1] = 2
+                climate_modifier[2] = 0.8
+            elif current_climate == 'Rocky':  # higher levels or solids
+                climate_modifier[2] = 1.5
+            elif current_climate == 'desert':  # higher levels or solids, no use-able amount of water
+                climate_modifier[1] = 0.8
+                climate_modifier[2] = 1.75
+            elif current_climate == 'Gas Giant':  # huge levels of gas, no liquid or solid
+                climate_modifier[0] = 2
+                climate_modifier[1] = 0.8
+                climate_modifier[2] = 0.8
+            elif current_climate == 'Toxic':  # higher levels of gas
+                climate_modifier[0] = 1.5
+            elif current_climate == 'Frozen World':  # higher levels of liquid
+                climate_modifier[1] = 1.5
+            elif current_climate == 'Metallic World':  # huge levels of solids, no liquid
+                climate_modifier[1] = 0.8
+                climate_modifier[2] = 2
+            elif current_climate == 'Barren World':  # higher levels of solids, no liquids or gases
+                climate_modifier[0] = 0.8
+                climate_modifier[1] = 0.8
+                climate_modifier[2] = 1.5
+            else:
+                climate_modifier = [1, 1, 1]
+
+            for mineral_group in xrange(0, 3):
+                # 1st loop cycles through mineral groups
+                for mineral in xrange(0, 10):
+                    # 2nd loop cycles through each mineral
+                    chance_of_prod = random.randint(1, 100)
+                    chance_of_req = random.randint(1, 100)
+                    # generate random number for comparison, that decides whether production or requirement levels change
+                    if self.production_chance[mineral_group][mineral] <= chance_of_prod:
+                        # if the chance of production is less than the random chance_of_prod, mineral production improves
+                        self.production_chance[mineral_group][mineral] += random.randint(1, 3)
+                        # better chance of improving next time
+                        self.production[mineral_group][mineral] += 1  # Higher increase next time
+                        self.minerals[mineral_group][mineral] += (self.production[mineral_group][mineral] *
+                                                                  climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
+                        # ^too long line, adds the current amount of mineral production with modifiers to overall mineral level.
+                    if self.production_chance[mineral_group][mineral] > high_chance:
+                        self.production_chance[mineral_group][mineral] = high_chance
+                        # makes sure chance of changing never goes above the set limits
+
+                    elif self.production_chance[mineral_group][mineral] > chance_of_prod:
+                        self.production_chance[mineral_group][mineral] -= random.randint(1, 3)
+                        self.production[mineral_group][mineral] -= 1
+                        self.minerals[mineral_group][mineral] += (self.production[mineral_group][mineral] *
+                                                                  climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
+                        if self.production_chance[mineral_group][mineral] < low_chance:
+                            self.production_chance[mineral_group][mineral] = low_chance
+
+                    if self.requirement_chance[mineral_group][mineral] <= chance_of_req:
+                        self.requirement_chance[mineral_group][mineral] += random.randint(1, 3)
+                        self.requirement[mineral_group][mineral] += 1
+                        self.minerals[mineral_group][mineral] -= self.requirement[mineral_group][mineral] / all_minerals_rarity[mineral_group][mineral]
+                        if self.requirement_chance[mineral_group][mineral] > high_chance:
+                            self.requirement_chance[mineral_group][mineral] = high_chance
+
+                    elif self.requirement_chance[mineral_group][mineral] > chance_of_req:
+                        self.requirement_chance[mineral_group][mineral] -= random.randint(1, 3)
+                        self.requirement[mineral_group][mineral] -= 1
+                        self.minerals[mineral_group][mineral] -= self.requirement[mineral_group][mineral] / all_minerals_rarity[mineral_group][mineral]
+                        if self.requirement_chance[mineral_group][mineral] < low_chance:
+                            self.requirement_chance[mineral_group][mineral] = low_chance
+
+                    # round result of each mineral level for legibility
+                    self.minerals[mineral_group][mineral] = int(round(self.minerals[mineral_group][mineral]))
+
+                    # convert mineral levels into need if mineral levels are in -int
+                    if self.minerals[mineral_group][mineral] < 0:
+                        self.need[mineral_group][mineral] = self.minerals[mineral_group][mineral]
+                        # change minerals need to positive integers for legibility
+                        self.need[mineral_group][mineral] = -self.need[mineral_group][mineral]
+                    else:
+                        self.need[mineral_group][mineral] = 0
+                        # if a planets mineral level is not below 0, need will always be 0
+
+                    if self.production[mineral_group][mineral] < 0:
+                        self.production[mineral_group][mineral] = 1
+                    if self.production[mineral_group][mineral] > 50:
+                        self.production[mineral_group][mineral] = 49
+                    if self.requirement[mineral_group][mineral] < 0:
+                        self.requirement[mineral_group][mineral] = 1
+                    if self.requirement[mineral_group][mineral] > 50:
+                        self.requirement[mineral_group][mineral] = 49
+
+    def find_price(self, element_rarity):
+        # imports the mineral rarity variables to be used later on
+        gas_rarity = element_rarity[0]
+        liquid_rarity = element_rarity[1]
+        solid_rarity = element_rarity[2]
+
+        max_value = 100000
+        all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
+        for mineral_group in xrange(0, 3):
+            # 1st loop cycles through mineral groups
+            for mineral in xrange(0, 10):
+                # 2nd loop cycles through each mineral
+                buy_base_price = 0
+                sell_base_price = 0
+                if self.minerals[mineral_group][mineral] > 0:
+                    sell_base_price = max_value / self.minerals[mineral_group][mineral]
+                    sell_base_price *= all_minerals_rarity[mineral_group][mineral]
+                    random_price_change = random.randint(1, 2)
+                    if random_price_change == 1:
+                        sell_base_price += sell_base_price / random.randint(10, 20)
+                    if random_price_change == 2:
+                        sell_base_price -= sell_base_price / random.randint(10, 20)
+                self.price_sell[mineral_group][mineral] = sell_base_price
+                if self.need[mineral_group][mineral] > 0:
+                    buy_base_price = self.need[mineral_group][mineral] / 10
+                    buy_base_price *= all_minerals_rarity[mineral_group][mineral]
+                    random_price_change = random.randint(1, 2)
+                    if random_price_change == 1:
+                        buy_base_price += buy_base_price / random.randint(10, 20)
+                    if random_price_change == 2:
+                        buy_base_price -= buy_base_price / random.randint(10, 20)
+                self.price_buy[mineral_group][mineral] = buy_base_price
+
+
 def get_language2():
     # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
     lines = []
@@ -122,130 +264,6 @@ def assign_minerals_rarity():
 
     return element_rarity
 
-
-def add_minerals(number_of_planets, element_rarity):
-    # cycles through planets using xrange as objects don't provide an index and i need that further on!
-    for planet in xrange(0, number_of_planets):
-        # imports the mineral rarity variables to be used later on
-        gas_rarity = element_rarity[0]
-        liquid_rarity = element_rarity[1]
-        solid_rarity = element_rarity[2]
-        all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
-
-        # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
-        low_chance = 10
-        high_chance = 90
-
-        # finds the current climate and adds a climate modifier to results of mineral production
-        # there maybe a better way of doing this???
-        current_climate = planets[planet].climate
-        climate_modifier = [1, 1, 1]
-        # climate modifier where 0, 1 and 2 of array are gas, liquid, solid respectively
-        if current_climate == "Tropical":  # higher levels of gas
-            climate_modifier[0] = 1.5
-        elif current_climate == 'Oceanic':  # much higher levels of water, less solid
-            climate_modifier[1] = 2
-            climate_modifier[2] = 0.8
-        elif current_climate == 'Rocky':  # higher levels or solids
-            climate_modifier[2] = 1.5
-        elif current_climate == 'desert':  # higher levels or solids, no use-able amount of water
-            climate_modifier[1] = 0.8
-            climate_modifier[2] = 1.75
-        elif current_climate == 'Gas Giant':  # huge levels of gas, no liquid or solid
-            climate_modifier[0] = 2
-            climate_modifier[1] = 0.8
-            climate_modifier[2] = 0.8
-        elif current_climate == 'Toxic':  # higher levels of gas
-            climate_modifier[0] = 1.5
-        elif current_climate == 'Frozen World':  # higher levels of liquid
-            climate_modifier[1] = 1.5
-        elif current_climate == 'Metallic World':  # huge levels of solids, no liquid
-            climate_modifier[1] = 0.8
-            climate_modifier[2] = 2
-        elif current_climate == 'Barren World':  # higher levels of solids, no liquids or gases
-            climate_modifier[0] = 0.8
-            climate_modifier[1] = 0.8
-            climate_modifier[2] = 1.5
-        else:
-            climate_modifier = [1, 1, 1]
-
-        for mineral_group in xrange(0, 3):
-            # 1st loop cycles through mineral groups
-            for mineral in xrange(0, 10):
-                # 2nd loop cycles through each mineral
-                chance_of_prod = random.randint(1, 100)
-                chance_of_req = random.randint(1, 100)
-                # generate random number for comparison, that decides whether production or requirement levels change
-                if planets[planet].production_chance[mineral_group][mineral] <= chance_of_prod:
-                    # if the chance of production is less than the random chance_of_prod, mineral production improves
-                    planets[planet].production_chance[mineral_group][mineral] += random.randint(1, 3)  # better chance of improving next time
-                    planets[planet].production[mineral_group][mineral] += 1  # Higher increase next time
-                    planets[planet].minerals[mineral_group][mineral] \
-                        += (planets[planet].production[mineral_group][mineral] * climate_modifier[mineral_group]) \
-                        * (all_minerals_rarity[mineral_group][mineral] / 1.5)
-                    # ^too long line, adds the current amount of mineral production with modifiers to overall mineral level.
-                if planets[planet].production_chance[mineral_group][mineral] >= high_chance:
-                        planets[planet].production_chance[mineral_group][mineral] = high_chance
-                        # makes sure chance of changing never goes above the set limits
-
-                elif planets[planet].production_chance[mineral_group][mineral] > chance_of_prod:
-                    planets[planet].production_chance[mineral_group][mineral] -= random.randint(1, 3)
-                    planets[planet].production[mineral_group][mineral] -= 1
-                    planets[planet].minerals[mineral_group][mineral] += (planets[planet].production[mineral_group][mineral] * climate_modifier[mineral_group]) * (all_minerals_rarity[mineral_group][mineral] /1.5)
-                    if planets[planet].production_chance[mineral_group][mineral] <= low_chance:
-                        planets[planet].production_chance[mineral_group][mineral] = low_chance
-
-                if planets[planet].requirement_chance[mineral_group][mineral] <= chance_of_req:
-                    planets[planet].requirement_chance[mineral_group][mineral] += random.randint(1, 3)
-                    planets[planet].requirement[mineral_group][mineral] += 1
-                    planets[planet].minerals[mineral_group][mineral] -= planets[planet].requirement[mineral_group][mineral] * (all_minerals_rarity[mineral_group][mineral] /1.5)
-                    if planets[planet].requirement_chance[mineral_group][mineral] >= high_chance:
-                        planets[planet].requirement_chance[mineral_group][mineral] = high_chance
-
-                elif planets[planet].requirement_chance[mineral_group][mineral] > chance_of_req:
-                    planets[planet].requirement_chance[mineral_group][mineral] -= random.randint(1, 3)
-                    planets[planet].requirement[mineral_group][mineral] -= 1
-                    planets[planet].minerals[mineral_group][mineral] -= planets[planet].requirement[mineral_group][mineral] * (all_minerals_rarity[mineral_group][mineral] /1.5)
-                    if planets[planet].requirement_chance[mineral_group][mineral] <= low_chance:
-                        planets[planet].requirement_chance[mineral_group][mineral] = low_chance
-
-                # round result of each mineral level for legibility
-                planets[planet].minerals[mineral_group][mineral] = int(round(planets[planet].minerals[mineral_group][mineral]))
-
-                # convert mineral levels into need if mineral levels are in -int
-                if planets[planet].minerals[mineral_group][mineral] < 0:
-                    planets[planet].need[mineral_group][mineral] = planets[planet].minerals[mineral_group][mineral]
-                    # change minerals need to positive integers for legibility
-                    planets[planet].need[mineral_group][mineral] = -planets[planet].need[mineral_group][mineral]
-                else:
-                    planets[planet].need[mineral_group][mineral] = 0
-                    # if a planets mineral level is not below 0, need will always be 0
-
-
-def find_price(number_of_planets, element_rarity):
-    # cycles through planets using xrange as objects don't provide an index and i need that further on!
-    for planet in xrange(0, number_of_planets):
-        # imports the mineral rarity variables to be used later on
-        gas_rarity = element_rarity[0]
-        liquid_rarity = element_rarity[1]
-        solid_rarity = element_rarity[2]
-
-        max_value = 123456789
-        all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
-        for mineral_group in xrange(0, 3):
-            # 1st loop cycles through mineral groups
-            for mineral in xrange(0, 10):
-                base_price = 0
-                # 2nd loop cycles through each mineral
-                if planets[planet].minerals[mineral_group][mineral] > 0:
-                    base_price = max_value / planets[planet].minerals[mineral_group][mineral]
-                    random_price_change = random.randint(1, 2)
-                    if random_price_change == 1:
-                        base_price += base_price / random.randint(10, 20)
-                    if random_price_change == 2:
-                        base_price -= base_price / random.randint(10, 20)
-                planets[planet].price_sell[mineral_group][mineral] = base_price
-
 number_of_planets = int(raw_input("Choose how many planets"))
 
 elements = create_elements()
@@ -253,9 +271,10 @@ elements_rarity = assign_minerals_rarity()
 
 planets = [Planet() for x in xrange(number_of_planets)]
 
-for tick in xrange(1, 100):
-    add_minerals(number_of_planets, elements_rarity)
-    find_price(number_of_planets, elements_rarity)
+for tick in xrange(1, 1000):
+    for planet in xrange(0, number_of_planets):
+        planets[planet].add_minerals(elements_rarity)
+        planets[planet].find_price(elements_rarity)
     # time.sleep(1)
 
 for planet2 in xrange(len(planets)):
