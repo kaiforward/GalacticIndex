@@ -49,7 +49,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         return word
 
     def create_climate(self):
-        # RANDOMLY DECIDES WETHER PLANET IS HABITABLE, IF IT IS HABITABLE IT CHOOSES WHAT CLIMATE IT IS
+        # RANDOMLY DECIDES WHETHER PLANET IS HABITABLE, IF IT IS HABITABLE IT CHOOSES WHAT CLIMATE IT IS
         decide_if_habitable = random.random()
         randomize_climate = ["Continental", "Tropical", "Oceanic", "Desert", "Rocky", "Arctic"]
         randomize_barren = ["Barren World", "Gas Giant", "Metallic World", "Frozen World", "Toxic World"]
@@ -72,7 +72,6 @@ class Planet(object):  # Planet class creates all variables for individual plane
             # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
             low_chance = 45
             high_chance = 55
-
 
             # finds the current climate and adds a climate modifier to results of mineral production
             # there maybe a better way of doing this???
@@ -151,23 +150,28 @@ class Planet(object):  # Planet class creates all variables for individual plane
                     # round result of each mineral level for legibility
                     self.minerals[mineral_group][mineral] = int(round(self.minerals[mineral_group][mineral]))
 
-                    # convert mineral levels into need if mineral levels are in -int
-                    if self.minerals[mineral_group][mineral] < 0:
-                        self.need[mineral_group][mineral] = self.minerals[mineral_group][mineral]
-                        # change minerals need to positive integers for legibility
-                        self.need[mineral_group][mineral] = -self.need[mineral_group][mineral]
-                    else:
-                        self.need[mineral_group][mineral] = 0
-                        # if a planets mineral level is not below 0, need will always be 0
+    def find_mineral_need(self):
+        for mineral_group in xrange(0, 3):
+            # 1st loop cycles through mineral groups
+            for mineral in xrange(0, 10):
+                # 2nd loop cycles through each mineral
+                # convert mineral levels into need if mineral levels are in -int
+                if self.minerals[mineral_group][mineral] < 0:
+                    self.need[mineral_group][mineral] = self.minerals[mineral_group][mineral]
+                    # change minerals need to positive integers for legibility
+                    self.need[mineral_group][mineral] = -self.need[mineral_group][mineral]
+                else:
+                    self.need[mineral_group][mineral] = 0
+                    # if a planets mineral level is not below 0, need will always be 0
 
-                    if self.production[mineral_group][mineral] < 0:
-                        self.production[mineral_group][mineral] = 1
-                    if self.production[mineral_group][mineral] > 50:
-                        self.production[mineral_group][mineral] = 49
-                    if self.requirement[mineral_group][mineral] < 0:
-                        self.requirement[mineral_group][mineral] = 1
-                    if self.requirement[mineral_group][mineral] > 50:
-                        self.requirement[mineral_group][mineral] = 49
+                if self.production[mineral_group][mineral] < 0:
+                    self.production[mineral_group][mineral] = 1
+                if self.production[mineral_group][mineral] > 50:
+                    self.production[mineral_group][mineral] = 49
+                if self.requirement[mineral_group][mineral] < 0:
+                    self.requirement[mineral_group][mineral] = 1
+                if self.requirement[mineral_group][mineral] > 50:
+                    self.requirement[mineral_group][mineral] = 49
 
     def find_price(self, element_rarity):
         # imports the mineral rarity variables to be used later on
@@ -203,77 +207,81 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 self.price_buy[mineral_group][mineral] = buy_base_price
 
 
-def get_language2():
-    # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
-    lines = []
-    with open('language.txt') as language:
-        for line in language:
-            lines.append(line.strip())
-    return lines
+class Elements(object):  # Planet class creates all variables for individual planets
+    # The class "constructor"
+    def __init__(self):
+        self.element_names = self.create_elements()
+        self.element_rarity = self.assign_minerals_rarity()
 
+    def get_language(self):
+        # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
+        lines = []
+        with open('language.txt') as language:
+            for line in language:
+                lines.append(line.strip())
+        return lines
 
-def create_word2(minverb, maxverb):
-    # creates a word by getting the verb list and randomly selecting non-repeating verbs to make words
-    verbs_list = get_language2()
-    word = ""  # created word
-    previous_verb = ""  # previous used verb
-    verbs = random.randint(minverb, maxverb)
+    def create_word(self, minverb, maxverb):
+        # creates a word by getting the verb list and randomly selecting non-repeating verbs to make words
+        verbs_list = self.get_language()
+        word = ""  # created word
+        previous_verb = ""  # previous used verb
+        verbs = random.randint(minverb, maxverb)
 
-    for x1 in xrange(0, verbs):
-        random_verb = random.choice(verbs_list)
-        if previous_verb == random_verb:
-            while previous_verb == random_verb:
-                random_verb = random.choice(verbs_list)
-        previous_verb = random_verb
-        word += random_verb
-    return word
+        for x1 in xrange(0, verbs):
+            random_verb = random.choice(verbs_list)
+            if previous_verb == random_verb:
+                while previous_verb == random_verb:
+                    random_verb = random.choice(verbs_list)
+            previous_verb = random_verb
+            word += random_verb
+        return word
 
+    def create_elements(self):
+        gas_suffix = ["xygen", "lium", "bium", "oron", ]
+        liquid_suffix = ["giun", "allum", "niun", "siun", ]
+        solid_suffix = ["omin", "dite", "dium", "tium", ]
+        element_suffix = [gas_suffix, liquid_suffix, solid_suffix]
 
-def create_elements():
-    gas_suffix = ["xygen", "lium", "bium", "oron", ]
-    liquid_suffix = ["giun", "allum", "niun", "siun", ]
-    solid_suffix = ["omin", "dite", "dium", "tium", ]
-    element_suffix = [gas_suffix, liquid_suffix, solid_suffix]
+        gases = [""] * 10
+        liquids = [""] * 10
+        solids = [""] * 10
+        all_elements = [gases, liquids, solids]
 
-    gases = [""] * 10
-    liquids = [""] * 10
-    solids = [""] * 10
-    all_elements = [gases, liquids, solids]
+        for x7 in xrange(0, 3):  # this iterates through the three types of element
+            current_element = all_elements[x7]
+            for x4 in xrange(0, 10):  # this iterates through each 10 elements of current type
+                current_prefix = self.create_word(1, 1)
+                current_suffix = element_suffix[x7]
+                current_element[x4] = current_prefix
+                current_element[x4] += random.choice(current_suffix)
+        return all_elements
 
-    for x7 in xrange(0, 3):  # this iterates through the three types of element
-        current_element = all_elements[x7]
-        for x4 in xrange(0, 10):  # this iterates through each 10 elements of current type
-            current_prefix = create_word2(1, 1)
-            current_suffix = element_suffix[x7]
-            current_element[x4] = current_prefix
-            current_element[x4] += random.choice(current_suffix)
-    return all_elements
+    def assign_minerals_rarity(self):
+        gas_rarity = [0] * 10
+        liquids_rarity = [0] * 10
+        solids_rarity = [0] * 10
 
+        element_rarity = [gas_rarity, liquids_rarity, solids_rarity]
 
-def assign_minerals_rarity():
-    gas_rarity = [0] * 10
-    liquids_rarity = [0] * 10
-    solids_rarity = [0] * 10
+        for x5 in xrange(0, 3):  # this iterates through the three types of element
+            current_rarity = element_rarity[x5]
+            for x6 in xrange(0, 10):  # this iterates through each 10 elements of current type
+                current_rarity[x6] = random.randint(1, 10)
 
-    element_rarity = [gas_rarity, liquids_rarity, solids_rarity]
-
-    for x5 in xrange(0, 3):  # this iterates through the three types of element
-        current_rarity = element_rarity[x5]
-        for x6 in xrange(0, 10):  # this iterates through each 10 elements of current type
-            current_rarity[x6] = random.randint(1, 10)
-
-    return element_rarity
+        return element_rarity
 
 number_of_planets = int(raw_input("Choose how many planets"))
 
-elements = create_elements()
-elements_rarity = assign_minerals_rarity()
+elements = Elements().create_elements()
+elements_rarity = Elements().assign_minerals_rarity()
 
 planets = [Planet() for x in xrange(number_of_planets)]
 
 for tick in xrange(1, 1000):
     for planet in xrange(0, number_of_planets):
         planets[planet].add_minerals(elements_rarity)
+        planets[planet].find_mineral_need()
         planets[planet].find_price(elements_rarity)
     # time.sleep(1)
 
@@ -297,4 +305,3 @@ for planet2 in xrange(len(planets)):
 print elements_rarity
 print elements
 
-# the code works but it seems like this is bad practise is some way? compiler says it shouldn't work
