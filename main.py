@@ -11,15 +11,17 @@ planets = [Planet() for x in xrange(number_of_planets)]
 
 price_check = 0
 
-for tick in xrange(1, 1000):
+for tick in xrange(1, 10000):
     # simulation ticks
     price_check += 1
     for planet in xrange(0, number_of_planets):  # cycles through each planet
         planets[planet].add_minerals(elements_rarity)  # Add and removes different levels of minerals from a planet
         planets[planet].find_mineral_need()  # finds out what minerals a planet needs
-        if price_check >= 500:  # resets max price every 500 ticks, so max price is for example that days changes.
+        if price_check >= 1800:  # resets max price every 500 ticks, so max price is for example that days changes.
             planets[planet].max_price_buy = [[0]*10, [0]*10, [0]*10]
             planets[planet].max_price_sell = [[0]*10, [0]*10, [0]*10]
+            planets[planet].low_price_buy = [[100000]*10, [100000]*10, [100000]*10]
+            planets[planet].low_price_sell = [[100000]*10, [100000]*10, [100000]*10]
             price_check = 0
         planets[planet].find_max_prices()
         planets[planet].find_price(elements_rarity)  # Calculates the buy and sell price of each mineral on a planet
@@ -33,17 +35,24 @@ for planet2 in xrange(len(planets)):
     print "Habitable -", current.habitable
     print "Climate -", current.climate
     print "Economic Status -", current.economic
-    print "required -", current.total_increase
-    print "Products -", current.total_decrease
-    print "Pro Chan -", current.production_chance
-    print "Req Chan -", current.requirement_chance
-    print "Minerals -", current.minerals
-    print "Sell Pri -", current.price_sell
-    print "Max-sell -", current.max_price_sell
-    print "Cur Need -", current.need
-    print "BuyPrice -", current.price_buy
-    print "Max--Buy -", current.max_price_buy
-
+    print ""
+    print "required minerals -", current.total_increase[1]
+    print "Produced minerals -", current.total_decrease[1]
+    print "Production Change -", current.production_chance[1]
+    print "Required Change   -", current.requirement_chance[1]
+    print ""
+    print "Minerals Levels   -", current.minerals[1]
+    print "Sell Price        -", current.price_sell[1]
+    print "Hours High Sell P -", current.max_price_sell[1]
+    print "Hours low Sell P  -", current.low_price_sell[1]
+    print "Turns prod inc/dec-", current.how_many_times_production_changed[1]
+    print ""
+    print "Minerals Needed   -", current.need[1]
+    print "Minerals BuyPrice -", current.price_buy[1]
+    print "Hours High Buy P  -", current.max_price_buy[1]
+    print "Hours low Buy P   -", current.low_price_buy[1]
+    print "Turns requ inc/dec-", current.how_many_times_requirement_changed[1]
+    print ""
 
 print elements_rarity
 print elements

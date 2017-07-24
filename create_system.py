@@ -26,7 +26,12 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.price_sell = [[0]*10, [0]*10, [0]*10]
         self.price_buy = [[0]*10, [0]*10, [0]*10]
         self.max_price_sell = [[0]*10, [0]*10, [0]*10]
+        self.low_price_sell = [[0]*10, [0]*10, [0]*10]
         self.max_price_buy = [[0]*10, [0]*10, [0]*10]
+        self.low_price_buy = [[0]*10, [0]*10, [0]*10]
+        self.how_many_times_production_changed = [[0]*10, [0]*10, [0]*10]
+        self.how_many_times_requirement_changed = [[0] * 10, [0] * 10, [0] * 10]
+
 
     def get_language(self):
         # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
@@ -74,8 +79,8 @@ class Planet(object):  # Planet class creates all variables for individual plane
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
 
         # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
-        low_chance = 45
-        high_chance = 55
+        low_chance = 35
+        high_chance = 65
 
         # finds the current climate and adds a climate modifier to results of mineral production
         # there maybe a better way of doing this???
@@ -117,7 +122,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 chance_of_prod = random.randint(1, 100)
                 chance_of_req = random.randint(1, 100)
                 # generate random number for comparison, that decides whether production or requirement levels change
-                if self.production_chance[mineral_group][mineral] <= chance_of_prod:
+                if chance_of_prod <= self.production_chance[mineral_group][mineral]:
                     # if the chance of production is less than the random chance_of_prod, mineral production improves
                     self.production_chance[mineral_group][mineral] += random.randint(1, 3)
                     # better chance of improving next time
@@ -128,28 +133,42 @@ class Planet(object):  # Planet class creates all variables for individual plane
                     if self.production_chance[mineral_group][mineral] > high_chance:
                         self.production_chance[mineral_group][mineral] = high_chance
                     # makes sure chance of changing never goes above the set limits
+                    if self.how_many_times_production_changed[mineral_group][mineral] < 0:
+                        # if production was previously decreasing reset counter
+                        self.how_many_times_production_changed[mineral_group][mineral] = 0
+                    self.how_many_times_production_changed[mineral_group][mineral] += 1
+                    # measures how many times production has improved in a row
 
-                elif self.production_chance[mineral_group][mineral] > chance_of_prod:
+                elif chance_of_prod > self.production_chance[mineral_group][mineral]:
                     self.production_chance[mineral_group][mineral] -= random.randint(1, 3)
                     self.production[mineral_group][mineral] -= 1
                     self.minerals[mineral_group][mineral] += (self.production[mineral_group][mineral] *
                                                               climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
                     if self.production_chance[mineral_group][mineral] < low_chance:
                         self.production_chance[mineral_group][mineral] = low_chance
+                    if self.how_many_times_production_changed[mineral_group][mineral] > 0:
+                        self.how_many_times_production_changed[mineral_group][mineral] = 0
+                    self.how_many_times_production_changed[mineral_group][mineral] -= 1
 
-                if self.requirement_chance[mineral_group][mineral] <= chance_of_req:
+                if chance_of_req <= self.requirement_chance[mineral_group][mineral]:
                     self.requirement_chance[mineral_group][mineral] += random.randint(1, 3)
                     self.requirement[mineral_group][mineral] += 1
                     self.minerals[mineral_group][mineral] -= self.requirement[mineral_group][mineral] / all_minerals_rarity[mineral_group][mineral]
                     if self.requirement_chance[mineral_group][mineral] > high_chance:
                         self.requirement_chance[mineral_group][mineral] = high_chance
+                    if self.how_many_times_requirement_changed[mineral_group][mineral] < 0:
+                        self.how_many_times_requirement_changed[mineral_group][mineral] = 0
+                    self.how_many_times_requirement_changed[mineral_group][mineral] += 1
 
-                elif self.requirement_chance[mineral_group][mineral] > chance_of_req:
+                elif chance_of_req > self.requirement_chance[mineral_group][mineral]:
                     self.requirement_chance[mineral_group][mineral] -= random.randint(1, 3)
                     self.requirement[mineral_group][mineral] -= 1
                     self.minerals[mineral_group][mineral] -= self.requirement[mineral_group][mineral] / all_minerals_rarity[mineral_group][mineral]
                     if self.requirement_chance[mineral_group][mineral] < low_chance:
                         self.requirement_chance[mineral_group][mineral] = low_chance
+                    if self.how_many_times_requirement_changed[mineral_group][mineral] > 0:
+                        self.how_many_times_requirement_changed[mineral_group][mineral] = 0
+                    self.how_many_times_requirement_changed[mineral_group][mineral] -= 1
 
                 self.total_increase[mineral_group][mineral] = (self.production[mineral_group][mineral] * climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
                 self.total_increase[mineral_group][mineral] = int(round(self.total_increase[mineral_group][mineral]))  # round result
@@ -159,14 +178,14 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 # round result of each mineral level for legibility
                 self.minerals[mineral_group][mineral] = int(round(self.minerals[mineral_group][mineral]))
 
-                if self.production[mineral_group][mineral] < 0:
+                if self.production[mineral_group][mineral] < 1:
                     self.production[mineral_group][mineral] = 1
-                if self.production[mineral_group][mineral] > 50:
-                    self.production[mineral_group][mineral] = 49
-                if self.requirement[mineral_group][mineral] < 0:
+                if self.production[mineral_group][mineral] > 35:
+                    self.production[mineral_group][mineral] = 34
+                if self.requirement[mineral_group][mineral] < 1:
                     self.requirement[mineral_group][mineral] = 1
-                if self.requirement[mineral_group][mineral] > 50:
-                    self.requirement[mineral_group][mineral] = 49
+                if self.requirement[mineral_group][mineral] > 35:
+                    self.requirement[mineral_group][mineral] = 34
 
     def find_mineral_need(self):
         for mineral_group in xrange(0, 3):
@@ -188,7 +207,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         liquid_rarity = element_rarity[1]
         solid_rarity = element_rarity[2]
 
-        max_value = 100000
+        max_value = 500000
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
         for mineral_group in xrange(0, 3):
             # 1st loop cycles through mineral groups
@@ -220,11 +239,16 @@ class Planet(object):  # Planet class creates all variables for individual plane
     def find_max_prices(self):
         for mineral_group in xrange(0, 3):
             # 1st loop cycles through mineral groups
-            for mineral in xrange(0, 10):
-                if self.price_buy[mineral_group][mineral] >= self.max_price_buy[mineral_group][mineral]:
+            for mineral in xrange(0, 10):  # this finds the planets
+                if self.price_buy[mineral_group][mineral] > self.max_price_buy[mineral_group][mineral]:
                     self.max_price_buy[mineral_group][mineral] = self.price_buy[mineral_group][mineral]
-                if self.price_sell[mineral_group][mineral] >= self.max_price_sell[mineral_group][mineral]:
+                if self.price_sell[mineral_group][mineral] > self.max_price_sell[mineral_group][mineral]:
                     self.max_price_sell[mineral_group][mineral] = self.price_sell[mineral_group][mineral]
+
+                if self.price_buy[mineral_group][mineral] < self.low_price_buy[mineral_group][mineral]:
+                    self.low_price_buy[mineral_group][mineral] = self.price_buy[mineral_group][mineral]
+                if self.price_sell[mineral_group][mineral] < self.low_price_sell[mineral_group][mineral]:
+                    self.low_price_sell[mineral_group][mineral] = self.price_sell[mineral_group][mineral]
 
 
 class Elements(object):  # Planet class creates all variables for individual planets
