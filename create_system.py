@@ -1,5 +1,14 @@
 import random
-import time
+
+
+class CreateGalaxySize(object):
+    # The class "constructor"
+    def __init__(self):
+        self.number_of_planets = self.choose_number_of_planets()
+
+    def choose_number_of_planets(self):
+        number_of_planets = int(raw_input("Choose how many planets"))
+        return number_of_planets
 
 
 class Planet(object):  # Planet class creates all variables for individual planets
@@ -12,7 +21,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.name = self.create_word()  # create's random Planet Name
         self.habitable = habitable  # defines whether planet is habitable
         self.climate = climate  # based on habitability a climate is assigned
-        self.company_name = "huh"  # Not used yet
+        self.location = [0, 0]  # Location not set here as it must be unique from other planets
         self.economic = random.randint(1, 10)  # not used yet
         # using too many individual variables below, used 3 times more when i split the elements though >_<
         self.minerals = [[0]*10, [0]*10, [0]*10]
@@ -31,7 +40,6 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.low_price_buy = [[0]*10, [0]*10, [0]*10]
         self.how_many_times_production_changed = [[0]*10, [0]*10, [0]*10]
         self.how_many_times_requirement_changed = [[0] * 10, [0] * 10, [0] * 10]
-
 
     def get_language(self):
         # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
@@ -69,6 +77,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
             current_climate = random.choice(randomize_barren)
             current_habitable = "Inhabitable"
         return current_climate, current_habitable
+
 
     def add_minerals(self, element_rarity):
 
@@ -178,12 +187,12 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 # round result of each mineral level for legibility
                 self.minerals[mineral_group][mineral] = int(round(self.minerals[mineral_group][mineral]))
 
-                if self.production[mineral_group][mineral] < 1:
-                    self.production[mineral_group][mineral] = 1
+                if self.production[mineral_group][mineral] < 10:
+                    self.production[mineral_group][mineral] = 10
                 if self.production[mineral_group][mineral] > 35:
                     self.production[mineral_group][mineral] = 34
-                if self.requirement[mineral_group][mineral] < 1:
-                    self.requirement[mineral_group][mineral] = 1
+                if self.requirement[mineral_group][mineral] < 10:
+                    self.requirement[mineral_group][mineral] = 10
                 if self.requirement[mineral_group][mineral] > 35:
                     self.requirement[mineral_group][mineral] = 34
 
@@ -207,7 +216,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         liquid_rarity = element_rarity[1]
         solid_rarity = element_rarity[2]
 
-        max_value = 500000
+        max_value = 250000
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
         for mineral_group in xrange(0, 3):
             # 1st loop cycles through mineral groups
@@ -315,4 +324,15 @@ class Elements(object):  # Planet class creates all variables for individual pla
 
         return element_rarity
 
+
+class Company(object):  # Company class creates all variables for individual planets
+    # The class "constructor"
+    def __init__(self):
+        self.name = "A Company"
+        self.minerals = [[0]*10, [0]*10, [0]*10]
+        self.distance_from_planets = []
+
+    def find_distance_of_planets(self, number_of_planets):
+        for planets in xrange(0, number_of_planets):
+            self.distance_from_planets.append(random.randint(1000, 100000))
 
