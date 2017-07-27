@@ -1,6 +1,13 @@
 import random
 
 
+def create_locations():
+        location = [random.randint(1, 100), random.randint(1, 100)]
+        previous_location = location
+        while location == previous_location:
+            location = [random.randint(1, 100), random.randint(1, 100)]
+        return location
+
 class CreateGalaxySize(object):
     # The class "constructor"
     def __init__(self):
@@ -99,13 +106,13 @@ class Planet(object):  # Planet class creates all variables for individual plane
         if current_climate == "Tropical":  # higher levels of gas
             climate_modifier[0] = 1.5
         elif current_climate == 'Oceanic':  # much higher levels of water, less solid
-            climate_modifier[1] = 2
+            climate_modifier[1] = 1.75
             climate_modifier[2] = 0.8
         elif current_climate == 'Rocky':  # higher levels or solids
             climate_modifier[2] = 1.5
         elif current_climate == 'desert':  # higher levels or solids, no use-able amount of water
             climate_modifier[1] = 0.8
-            climate_modifier[2] = 1.75
+            climate_modifier[2] = 1.25
         elif current_climate == 'Gas Giant':  # huge levels of gas, no liquid or solid
             climate_modifier[0] = 2
             climate_modifier[1] = 0.8
@@ -113,7 +120,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         elif current_climate == 'Toxic':  # higher levels of gas
             climate_modifier[0] = 1.5
         elif current_climate == 'Frozen World':  # higher levels of liquid
-            climate_modifier[1] = 1.5
+            climate_modifier[1] = 1.25
         elif current_climate == 'Metallic World':  # huge levels of solids, no liquid
             climate_modifier[1] = 0.8
             climate_modifier[2] = 2
@@ -260,7 +267,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
                     self.low_price_sell[mineral_group][mineral] = self.price_sell[mineral_group][mineral]
 
 
-class Elements(object):  # Planet class creates all variables for individual planets
+class Elements(object):
     # The class "constructor"
     def __init__(self):
         self.element_names = self.create_elements()
@@ -330,9 +337,28 @@ class Company(object):  # Company class creates all variables for individual pla
     def __init__(self):
         self.name = "A Company"
         self.minerals = [[0]*10, [0]*10, [0]*10]
-        self.distance_from_planets = []
 
-    def find_distance_of_planets(self, number_of_planets):
-        for planets in xrange(0, number_of_planets):
-            self.distance_from_planets.append(random.randint(1000, 100000))
 
+class DataAggregator(object):
+
+    # this currently aggregates some planet based on certain reqyuirments, like lowest price of single mineral across all planets
+    def __init__(self, planets, number_of_planets):
+        self.all_planets = planets
+        self.number_of_planets = number_of_planets
+        self.mineral_lowest_sell_prices = self.find_lowest_sell_prices()
+
+    def find_lowest_sell_prices(self):
+
+            mineral_lowest_sell_prices = [[1000000]*10, [1000000]*10, [10000000]*10]
+            current_lowest_sell_prices = [[1000000] * 10, [1000000] * 10, [10000000] * 10]
+            previous_sell_price = [[1000000]*10, [1000000]*10, [10000000]*10]
+
+            for planet in xrange(0, self.number_of_planets):
+                for mineral_group in xrange(0, 3):
+                    for mineral_price in xrange(0, 10):
+                        current_lowest_sell_prices[mineral_group][mineral_price] = self.all_planets[planet].price_sell[mineral_group][mineral_price]
+                        if current_lowest_sell_prices[mineral_group][mineral_price] <= previous_sell_price[mineral_group][mineral_price]:
+                            if current_lowest_sell_prices[mineral_group][mineral_price] > 0:
+                                mineral_lowest_sell_prices[mineral_group][mineral_price] = current_lowest_sell_prices[mineral_group][mineral_price]
+                        previous_sell_price[mineral_group][mineral_price] = current_lowest_sell_prices[mineral_group][mineral_price]
+            return mineral_lowest_sell_prices
