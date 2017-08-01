@@ -1,6 +1,6 @@
 import pymongo
 
-# MONGO SHIT
+# MONGO
 def mongo_connect():
     try:
         conn = pymongo.MongoClient()
@@ -8,4 +8,3 @@ def mongo_connect():
         return conn
     except pymongo.errors.ConnectionFailure, e:
         print "Could not connect to MongoDB: %s" % e
-
