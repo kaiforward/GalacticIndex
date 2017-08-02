@@ -3,6 +3,9 @@ from create_system import create_locations  # import my classes
 from my_mongo import mongo_connect
 
 import time
+import locale
+locale.setlocale(locale.LC_ALL, "")
+
 
 mongo_connect()  # MONGO CONNECTION FUNCTION
 
@@ -67,6 +70,7 @@ for tick in xrange(1, 10000):
     fuel_change += 1
     # THIS IS THE PLANET ECONOMY CHANGE LOGIC
     for planet in xrange(0, number_of_planets):  # cycles through each planet
+        planets[planet].decide_economic_status()
         planets[planet].add_minerals(elements_rarity)  # Add and removes different levels of minerals from a planet
         planets[planet].find_mineral_need()  # finds out what minerals a planet needs
         planets[planet].find_price(elements_rarity)  # Calculates the buy and sell price of each mineral on a planet
@@ -75,8 +79,9 @@ for tick in xrange(1, 10000):
             for planet2 in xrange(0, number_of_planets):  # RESET FOR EVERY PLANET
                 planets[planet2].reset_max_prices()
                 price_check = 0
-    if fuel_change >= 200:
+    if fuel_change >= 20:
         fuel_price.fuel_prices()
+        fuel_change = 0
 
     mineral_low_sell_price, mineral_best_sell_price = DataAggregator(planets, number_of_planets).mineral_lowest_sell_prices
     # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
@@ -88,11 +93,12 @@ for tick in xrange(1, 10000):
     company.mineral_best_sell_prices = mineral_best_sell_price
     company.fuel_price = fuel_price.fuel_price  # find fuel price for company
 
-    company_profit_potential = company.evaluate_planet_prices()  # company evalutates the prices seeing which mineral has the most potential for profit
-    fuel_cost = company.calculate_fuel_cost() # find out the planet cost of fuel to each planet
+    company_profit_potential = company.evaluate_planet_prices()
+    # company evalutates the prices seeing which mineral has the most potential for profit
+    fuel_cost = company.calculate_fuel_cost()  # find out the cost of fuel to each planet
     profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit() # take that cost away from the profit potential
 
-    if tick >= 50:
+    if tick >= 1000:
         time.sleep(5)
         for planet in planets:
             # planet = planets[int(raw_input("Choose planet number to view"))]
@@ -101,6 +107,10 @@ for tick in xrange(1, 10000):
             print "Habitable -", planet.habitable
             print "Climate -", planet.climate
             print "Economic Status -", planet.economic
+            print "Population      -", locale.format('%d', planet.population, grouping=True)
+            print "Max Production  -", planet.max_production
+            print "Max Requirement -", planet.max_requirement
+            print "Low/High Chance -", planet.low_chance, planet.max_chance
             print ""
             print "required minerals -", planet.total_increase
             print "Produced minerals -", planet.total_decrease

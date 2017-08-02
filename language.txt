@@ -7,7 +7,7 @@ vi
 ma
 xa
 lo
-du
+ta
 por
 mur
 dir
@@ -24,7 +24,7 @@ ents
 othis
 faro
 lumo
-varo
+var
 ural
 ovor
 otor
