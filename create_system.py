@@ -88,9 +88,8 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.low_price_buy = [[0]*10, [0]*10, [0]*10]
         self.how_many_times_production_changed = [[0]*10, [0]*10, [0]*10]
         self.how_many_times_requirement_changed = [[0]*10, [0]*10, [0]*10]
-        self.max_chance = 55
-        self.low_chance = 45
-
+        self.max_low_chance_prod = [45, 55]
+        self.max_low_chance_req = [45, 55]
 
     def create_climate(self):
         # RANDOMLY DECIDES WHETHER PLANET IS HABITABLE, IF IT IS HABITABLE IT CHOOSES WHAT CLIMATE IT IS
@@ -107,16 +106,16 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
     def make_changes_based_on_economic(self):
         if self.economic == "Boom":
-            self.max_chance += random.randint(15, 25)
-            self.low_chance = 50
-            self.max_production += random.randint(15, 25)
+            self.max_low_chance_prod = [50, 75]
+            self.max_production = 35 + self.population / 1000000000
+            self.max_requirement = 35
         if self.economic == "Crash":
-            self.max_production -= 20
-            self.max_chance = 50
-            self.low_chance -= random.randint(15, 25)
-        else:
-            self.max_chance = 55
-            self.low_chance = 45
+            self.max_low_chance_prod = [25, 50]
+            self.max_production = 20
+            self.max_requirement = 35
+        if self.economic == "Steady":
+            self.max_low_chance_prod = [45, 55]
+            self.max_low_chance_req = [45, 55]
             self.max_production = 35
             self.max_requirement = 35
 
@@ -125,32 +124,32 @@ class Planet(object):  # Planet class creates all variables for individual plane
         production_increase_from_pop = self.population / 1000000000
         self.max_production += production_increase_from_pop
         self.max_requirement += production_increase_from_pop
-        self.population += random.randint(0, 1)
+        self.population += random.randint(0, 5)
 
     def decide_economic_status(self):
         # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
         if self.economic == "Steady":
-            random_chance_of_change = random.randint(1, 1000)
-            if random_chance_of_change == 500:
+            random_chance_of_change = random.randint(1, 10000)
+            if random_chance_of_change == 5000:
                 if random.random() > 0.50:
                     self.economic = "Boom"
                 else:
                     self.economic = "Crash"
         if self.economic == "Boom":
-            random_chance_of_change = random.randint(1, 1000)
+            random_chance_of_change = random.randint(1, 10000)
             if random_chance_of_change == 1:
                 self.economic = "Steady"
-            elif random_chance_of_change >= 950:
+            elif random_chance_of_change >= 9999:
                 self.economic = "Crash"
         if self.economic == "Crash":
-            random_chance_of_change = random.randint(1, 1000)
-            if random_chance_of_change <= 50:
+            random_chance_of_change = random.randint(1, 10000)
+            if random_chance_of_change <= 10:
                 self.economic = "Steady"
-            elif random_chance_of_change == 999:
+            elif random_chance_of_change == 9999:
                 self.economic = "Boom"
 
         self.make_changes_based_on_economic()
-        self.make_changes_based_on_pop()
+        self.make_changes_based_on_pop()  # must be second for modifier to be added
 
     def add_minerals(self, element_rarity):
 
@@ -180,16 +179,26 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 minerals = self.minerals[mineral_group]
                 times_production_increased = self.how_many_times_production_changed[mineral_group]
 
+                if self.economic == "Boom":
+                    positive_economic_modifier = random.randint(1, 5)
+                    negative_economic_modifier = 0
+                elif self.economic == "Crash":
+                    positive_economic_modifier = 0
+                    negative_economic_modifier = random.randint(1, 5)
+                else:
+                    positive_economic_modifier = 0
+                    negative_economic_modifier = 0
+
                 if chance_of_prod <= production_chances[mineral]:
                     # if the chance of production is less than the random chance_of_prod, mineral production improves
                     production_chances[mineral] += random.randint(1, 3)
                     # better chance of improving next time
-                    production[mineral] += 1  # Higher increase next time
+                    production[mineral] += 1 + positive_economic_modifier  # Higher increase next time
                     minerals[mineral] += (production[mineral] *
                                           climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
                     # ^too long line, adds the planet amount of mineral production with modifiers to overall mineral level.
-                    if production_chances[mineral] > self.max_chance:
-                        production_chances[mineral] = self.max_chance
+                    if production_chances[mineral] > self.max_low_chance_prod[1]:
+                        production_chances[mineral] = self.max_low_chance_prod[1]
                     # makes sure chance of changing never goes above the set limits
                     if times_production_increased[mineral] < 0:
                         # if production was previously decreasing reset counter
@@ -200,11 +209,11 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 # these further elif does the same as above but with the reverse effect of mineral production decreasing slightly
                 elif chance_of_prod > production_chances[mineral]:
                     production_chances[mineral] -= random.randint(1, 3)
-                    production[mineral] -= 1
+                    production[mineral] -= 1 - negative_economic_modifier
                     minerals[mineral] += (production[mineral] *
                                           climate_modifier[mineral_group]) / all_minerals_rarity[mineral_group][mineral]
-                    if production_chances[mineral] < self.low_chance:
-                        production_chances[mineral] = self.low_chance
+                    if production_chances[mineral] < self.max_low_chance_prod[0]:
+                        production_chances[mineral] = self.max_low_chance_prod[0]
                     if times_production_increased[mineral] > 0:
                         times_production_increased[mineral] = 0
                     times_production_increased[mineral] -= 1
@@ -216,20 +225,20 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
                 if chance_of_req <= requirement_chance[mineral]:
                     requirement_chance[mineral] += random.randint(1, 3)
-                    requirement[mineral] += 1
+                    requirement[mineral] += 1 + positive_economic_modifier
                     minerals[mineral] -= requirement[mineral] / all_minerals_rarity[mineral_group][mineral]
-                    if requirement_chance[mineral] > self.max_chance:
-                        requirement_chance[mineral] = self.max_chance
+                    if requirement_chance[mineral] > self.max_low_chance_req[1]:
+                        requirement_chance[mineral] = self.max_low_chance_req[1]
                     if times_requirement_changed[mineral] < 0:
                         times_requirement_changed[mineral] = 0
                     times_requirement_changed[mineral] += 1
 
                 elif chance_of_req > requirement_chance[mineral]:
                     requirement_chance[mineral] -= random.randint(1, 3)
-                    requirement[mineral] -= 1
+                    requirement[mineral] -= 1 - negative_economic_modifier
                     minerals[mineral] -= requirement[mineral] / all_minerals_rarity[mineral_group][mineral]
-                    if requirement_chance[mineral] < self.low_chance:
-                        requirement_chance[mineral] = self.low_chance
+                    if requirement_chance[mineral] < self.max_low_chance_req[0]:
+                        requirement_chance[mineral] = self.max_low_chance_req[0]
                     if times_requirement_changed[mineral] > 0:
                         times_requirement_changed[mineral] = 0
                     times_requirement_changed[mineral] -= 1

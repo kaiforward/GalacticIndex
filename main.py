@@ -99,7 +99,7 @@ for tick in xrange(1, 10000):
     profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit() # take that cost away from the profit potential
 
     if tick >= 1000:
-        time.sleep(5)
+        time.sleep(0.1)
         for planet in planets:
             # planet = planets[int(raw_input("Choose planet number to view"))]
             print "---------------------------------------------------------------------"
@@ -110,10 +110,11 @@ for tick in xrange(1, 10000):
             print "Population      -", locale.format('%d', planet.population, grouping=True)
             print "Max Production  -", planet.max_production
             print "Max Requirement -", planet.max_requirement
-            print "Low/High Chance -", planet.low_chance, planet.max_chance
+            print "Max/min possible chance prod", planet.max_low_chance_prod
+            print "Max/min possible chance req", planet.max_low_chance_req
             print ""
-            print "required minerals -", planet.total_increase
-            print "Produced minerals -", planet.total_decrease
+            print "Produced minerals -", planet.total_increase
+            print "Required Minerals-", planet.total_decrease
             print "Production Change -", planet.production_chance
             print "Required Change   -", planet.requirement_chance
             print ""

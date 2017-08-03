@@ -19,10 +19,11 @@ The front end of the site will make extensive use of D3 for data visualisation, 
 ### Existing Features
 - simple planetary simulation, where planets create and use up resources, surplus of resouces will be sellable items, lack of resources will be items they buy.
 - any amount of planets can be created and are randomly given the following attributes as well as many others: Name, Habitability, Climate, Resources, Required Resources, Buy/Sell Prices, x,y Locations
+- planets now experience crashes, booms and have different populations that affects other variables.
 - Companies are also created, with names and locations, At the moment they have the ability to look at the cheapest sell prices and best buy prices and determine the most profitable mineral at the current time.
 - they cannot currently do anything with information such as make an actual purchase and then look for an appropriate place to sell.
 
 ### Pages/Features Left to Implement
-Front End - All front-end features stil to be decided
-Backend - Connect data with D3 frontend
-	- Finish Creating Companies so they can make purchases, show profit and that profit is translated into stock prices.
+- All front-end features stil to be decided
+- Connecting data with D3 frontend
+- Finish Creating Companies so they can make purchases, show profit and that profit is translated into stock prices.
