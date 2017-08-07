@@ -22,6 +22,7 @@ planets = [Planet() for x in xrange(number_of_planets)]
 # CREATES A LIST OF LOCATIONS, IS USED HERE SO REPEATS WILL BE RECOGNISED
 location_list = []
 for planet in xrange(0, number_of_planets):
+    planets[planet].create_pop()
     current_location = create_locations()
     if current_location in location_list:  # if planet random location already used
         current_location = create_locations()
@@ -48,8 +49,9 @@ mineral_low_sell_price, mineral_best_sell_price = DataAggregator(planets, number
 mineral_high_buy_price, mineral_best_buy_price = DataAggregator(planets, number_of_planets).mineral_highest_buy_prices
 # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
 fuel_change = 0  # declared here because company needs it as arg
+tick = 0
 # THIS IS THE COMPANY LOGIC
-company = Company(location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change)
+company = Company(location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick)
 
 # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
 insert_high_low_prices = [{"Name": "Collator", "Low Prices": mineral_low_sell_price, "Best low prices": mineral_best_sell_price,
@@ -89,17 +91,30 @@ for tick in xrange(1, 10000):
     # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
     # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
 
-    company.mineral_best_buy_prices = mineral_best_buy_price  # give company good price data to work with
+    company.mineral_best_buy_prices = mineral_best_buy_price  # give company price data to work with
     company.mineral_best_sell_prices = mineral_best_sell_price
     company.fuel_price = fuel_price.fuel_price  # find fuel price for company
-
     company_profit_potential = company.evaluate_planet_prices()
     # company evalutates the prices seeing which mineral has the most potential for profit
     fuel_cost = company.calculate_fuel_cost()  # find out the cost of fuel to each planet
-    profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit() # take that cost away from the profit potential
+    profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit()  # take that cost away from the profit potential
+
+    company.tick = tick
 
     if tick >= 1000:
-        time.sleep(0.1)
+        time.sleep(5)
+
+        what_to_buy = company.decide_to_buy()
+        # trade_list = company.trade_list_timer(what_to_buy)
+
+        for planet in xrange(0, number_of_planets):  # cycles through each planet to check if purchases are made on each
+            make_purchase = planets[planet].remove_minerals(what_to_buy)  #comapny buys minerals
+
+        # what_to_sell = company.sell_the_minerals()
+        #
+        # for planet in xrange(0, number_of_planets):  # cycles through each planet to check if purchases are made on each
+        #     make_sale = planets[planet].buy_minerals(what_to_sell)  # comapany sells minerals
+
         for planet in planets:
             # planet = planets[int(raw_input("Choose planet number to view"))]
             print "---------------------------------------------------------------------"
@@ -145,6 +160,11 @@ for tick in xrange(1, 10000):
         print "Company Profit Potential list-", company_profit_potential
         print "Company fuel cost            -", fuel_cost
         print "Profit Potential After Fuel  -", profit_minus_fuel_cost
+        print "chosen Purchase", what_to_buy
+        print "comapany Money", company.company_money
+        print "Company Minerals", company.company_minerals
+        print "average Price Paid", company.average_prices_bought_for
+        print "trade List", company.trade_list
         print elements_rarity
         print elements
         print fuel_price.fuel_price
