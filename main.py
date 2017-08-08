@@ -1,14 +1,11 @@
 from create_system import CreateGalaxySize, Elements, Planet, Company, DataAggregator, FuelPrices  # import my classes
-from create_system import create_locations  # import my classes
-from my_mongo import mongo_connect
+from create_system import create_locations, create_all_planet_locations  # import my classes
+from my_mongo import my_mongo_insert, my_mongo_update
 
 import time
 import locale
 import random
-locale.setlocale(locale.LC_ALL, "")
-
-
-mongo_connect()  # MONGO CONNECTION FUNCTION
+locale.setlocale(locale.LC_ALL, "")  # used to format some of the numbers in when printed
 
 # galaxy_size = CreateGalaxySize()
 # number_of_planets = galaxy_size.number_of_planets
@@ -22,31 +19,7 @@ elements_rarity = Elements().assign_minerals_rarity()
 
 # CREATES THE PLANETS creates a number of planets, however many you want. try 1000 ;) (NO DON'T!)
 planets = [Planet() for x in xrange(number_of_planets)]
-
-# CREATES A LIST OF LOCATIONS, IS USED HERE SO REPEATS WILL BE RECOGNISED
-location_list = []
-for planet in xrange(0, number_of_planets):
-    planets[planet].create_pop()
-    current_location = create_locations()
-    if current_location in location_list:  # if planet random location already used
-        current_location = create_locations()
-    location_list.append(current_location)
-    planets[planet].location = location_list[planet]
-
-# MY MONGO INSERT BITS ----------------------
-connect_to_mongo = mongo_connect()
-database = connect_to_mongo['Galactic_stream']
-collection = database.my_galactic_test
-
-collection.drop()  # remove the collection
-# CREATE INITIAL INSERT OF ALL PLANETS
-for planet in xrange(0, number_of_planets):
-    insert_planet = [{"name": planets[planet].name, "Habitable": planets[planet].habitable, "Climate": planets[planet].climate,
-                      "Location": planets[planet].location, "Economic Status": planets[planet].economic,
-                      "Minerals": planets[planet].minerals, "Sell Price": planets[planet].price_sell,
-                      "Minerals Need": planets[planet].need, "Buy Price": planets[planet].price_buy}]
-    # INSERT FIRST PLANET
-    collection.insert(insert_planet)
+location_list = create_all_planet_locations(number_of_planets, planets)
 
 mineral_low_sell_price, mineral_best_sell_price = DataAggregator(planets, number_of_planets).mineral_lowest_sell_prices
 # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
@@ -57,17 +30,18 @@ tick = 0
 # THIS IS THE COMPANY LOGIC
 company = Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick)
 
-# NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
-insert_high_low_prices = [{"Name": "Collator", "Low Prices": mineral_low_sell_price, "Best low prices": mineral_best_sell_price,
-                           "High Prices": mineral_high_buy_price, "Best high prices": mineral_best_buy_price}]
-collection.insert(insert_high_low_prices)
-# -------------------------------------------
-
 fuel_price = FuelPrices()
-
 tags = ["gas", "liquid", "solid"]
 price_check = 0  # check with yoni how to use tick if i need to reset it?
 
+collection = my_mongo_insert(
+    number_of_planets,
+    planets,
+    mineral_low_sell_price,
+    mineral_best_sell_price,
+    mineral_high_buy_price,
+    mineral_best_buy_price
+)
 
 # BELOW IS WHERE ALL THE REPEATED FUNCTIONS ARE CARRIED OUT
 for tick in xrange(1, 10000):
@@ -100,22 +74,24 @@ for tick in xrange(1, 10000):
     company.fuel_price = fuel_price.fuel_price  # find fuel price for company
     fuel_cost = company.calculate_fuel_cost()  # find out the cost of fuel to each planet
     company_profit_potential = company.evaluate_planet_prices()
-    # company evalutates the prices seeing which mineral has the most potential for profit
+    # company evaluates the prices seeing which mineral has the most potential for profit
     profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit()  # take that cost away from the profit potential
 
     company.tick = tick
 
     if tick >= 1000:
-        time.sleep(1)
+        # time.sleep(0.1)
 
         company.purchase = company.decide_to_buy()
         company.sale = company.sell_minerals()
         purchase = company.purchase
         sale = company.sale
 
-        planets[planet].remove_minerals(purchase)
-        planets[planet].buy_minerals(sale)
+        for planet in xrange(0, number_of_planets):  # cycles through each planet
+            planets[planet].remove_minerals(purchase)  # remove minerals from planets when companies purchase them
+            planets[planet].buy_minerals(sale)  # add minerals to planets planets when companies make a sale to them
 
+        # PRINTING --------------------------------------------------------------------------------------------------
         for planet in planets:
             # planet = planets[int(raw_input("Choose planet number to view"))]
             print "---------------------------------------------------------------------"
@@ -146,51 +122,40 @@ for tick in xrange(1, 10000):
             print "LOW PRICE BUY     -", planet.low_price_buy
             print "Turns requ inc/dec-", planet.how_many_times_requirement_changed
             print "---------------------------------------------------------------------"
-            # company statistics
-            print "Company name", company.name
-        print "PLANET DISTANCES", company.planet_distances
-        print "Company Location", company.company_locations
-        # for min_g in xrange(0, 3):
-        #     for mineral in xrange(0, 10):
-        #         print "MINERAL LOW SELL PRICE  -", elements[min_g][mineral], mineral_low_sell_price[min_g][mineral]
-        #         print "MINERAL HIGH BUY PRICE  -", elements[min_g][mineral], mineral_high_buy_price[min_g][mineral]
+        # company statistics
         for mineral_group in xrange(0, 3):
             print "BEST LOW SELL PRICE-", tags[mineral_group], mineral_best_sell_price[mineral_group]
         for mineral_group in xrange(0, 3):
             print "BEST HIGH BUY PRICE-", tags[mineral_group], mineral_best_buy_price[mineral_group]
+        print "Company name", company.name
+        print "PLANET DISTANCES", company.planet_distances
+        print "Company Location", company.company_locations
         print "Company Profit Potential list-", company_profit_potential
         print "Company fuel cost            -", fuel_cost
         print "Profit Potential After Fuel  -", profit_minus_fuel_cost
-        print "Company Money", company.company_money
+        print "Company Money", locale.format('%d', company.company_money, grouping=True)
         print "Company Minerals", company.company_minerals
         print "Average Price Paid", company.average_prices_bought_for
         print "PURCHASE", company.purchase
         print "PURCHASE LIST", company.trade_list
         print 'SALE', company.sale
         print 'SALE LIST', company.sell_list
+        print 'minerals in transit bought', company.minerals_in_transit_bought
+        print 'minerals in transit sell', company.minerals_in_transit_sell
         print elements_rarity
         print elements
         print fuel_price.fuel_price
         print company.tick
         print tick
 
-    # MY MONGO UPDATE CALLED EVERY TICK TO UPDATE NEW PLANET VALUES.
-    # CREATE UPDATE
-    for planet in xrange(0, number_of_planets):
-        update_doc_selector = {"name": planets[planet].name}
-        update_doc = {"$set": {"Minerals": planets[planet].minerals, "Sell Price": planets[planet].price_sell,
-                               "Minerals Need": planets[planet].need,
-                               "Buy Price": planets[planet].price_buy}}
-        # UPDATE VALUES
-        collection.update(update_doc_selector, update_doc)
-
-    update_best_prices_selector = {"Name": "Collator"}
-    update_best_prices_info = {"$set": {"Low Prices": mineral_low_sell_price, "Best low prices": mineral_best_sell_price,
-                                        "High Prices": mineral_high_buy_price, "Best high prices": mineral_best_buy_price}}
-    # UPDATE VALUES
-    collection.update(update_best_prices_selector, update_best_prices_info)
-
-
+    my_mongo_update(number_of_planets,
+                    planets,
+                    mineral_low_sell_price,
+                    mineral_best_sell_price,
+                    mineral_high_buy_price,
+                    mineral_best_buy_price,
+                    collection
+    )
 
 
 
