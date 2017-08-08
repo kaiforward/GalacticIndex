@@ -80,11 +80,12 @@ for tick in xrange(1, 10000):
     company.tick = tick
 
     if tick >= 1000:
-        # time.sleep(0.1)
+        # time.sleep(1)
 
         company.purchase = company.decide_to_buy()
-        company.sale = company.sell_minerals()
         purchase = company.purchase
+
+        company.sale = company.sell_minerals()
         sale = company.sale
 
         for planet in xrange(0, number_of_planets):  # cycles through each planet

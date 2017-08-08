@@ -520,6 +520,7 @@ class Company(object):  # Company class creates all variables for individual pla
         self.planet_locations = planet_locations
         self.mineral_best_buy_prices = mineral_best_buy_prices
         self.mineral_best_sell_prices = mineral_best_sell_prices
+        self.tick = tick
         self.fuel_price = fuel_price
 
         self.name = self.create_company_name()
@@ -529,7 +530,6 @@ class Company(object):  # Company class creates all variables for individual pla
         self.profit_potential = self.evaluate_planet_prices()
         self.total_fuel_cost = self.calculate_fuel_cost()
         self.profit_minus_fuel = self.take_cost_of_fuel_per_unit()
-        self.tick = tick
 
         self.company_minerals = [0]*10, [0]*10, [0]*10
         self.minerals_in_transit_bought = [0]*10, [0]*10, [0]*10
@@ -657,7 +657,7 @@ class Company(object):  # Company class creates all variables for individual pla
 
                 amount_of_minerals_can_buy = 0
 
-                if purchase[0] > 0:  #<----- THIS BREAKS OCCASIONALLY??
+                if purchase[0] > 0:  # <----- THIS BREAKS OCCASIONALLY??
                     amount_of_minerals_can_buy = amount_to_spend / purchase[0]  # divide total money over cost of minerals
                     amount_of_minerals_can_buy = floor(amount_of_minerals_can_buy)  # round number down
                     amount_of_minerals_can_buy = int(round(amount_of_minerals_can_buy))  # convert to int
@@ -697,12 +697,9 @@ class Company(object):  # Company class creates all variables for individual pla
                     # the purchase is finalised by adding the minerals once time is reached
                     finished_trades.append(trades)  # create a list of all trades that were finished
             # remove these trades separately to not confuse the for loop ^^^
-            try:
-                if len(finished_trades) > 0:
-                    for finished_trades in finished_trades:
-                        list.remove(self.trade_list, self.trade_list[finished_trades])  # remove ongoing purchases from list.
-            finally:
-                return purchase
+            if len(finished_trades) > 0:
+                for finished_trade in reversed(finished_trades):  # ITERATE IN REVERSE SO NO INDEX ERRORS WHEN REMOVING
+                    list.__delitem__(self.trade_list, finished_trade)  # remove ongoing purchases from list.
         return purchase
 
     def take_cost_of_fuel_per_unit_sale(self):
@@ -736,37 +733,34 @@ class Company(object):  # Company class creates all variables for individual pla
                                 planet_distance = self.planet_distances[planet]+self.tick+1  # use that planets distance
                         price_sold_for = planets_buy_prices[mineral_group][mineral]
                         amount_sold = self.company_minerals[mineral_group][mineral]
+                        profit = price_sold_for[0] - self.average_prices_bought_for[mineral_group][mineral]
+                        element = self.elements[mineral_group][mineral]
                         if amount_sold >= 500:
                             amount_sold = 500
                         sale = [
-                            number_of_minerals,
-                            planet_to_sell_to,
-                            planet_distance,
                             price_sold_for[0],
-                            amount_sold,
+                            profit,
+                            planet_to_sell_to,
                             mineral_group,
-                            mineral
+                            mineral,
+                            element,
+                            amount_sold,
+                            planet_distance,
                         ]
-                        self.company_minerals[mineral_group][mineral] -= amount_sold  # remove minerals from sellable's store
-                        if sale[4] > 0:
+                        self.company_minerals[mineral_group][mineral] -= amount_sold  # remove minerals from saleable store
+                        if sale[6] > 0:
                             self.sell_list.append(sale)  # create a list of all trades
-                            self.minerals_in_transit_sell[sale[5]][sale[6]] += sale[4]
+                            self.minerals_in_transit_sell[sale[3]][sale[4]] += sale[6]
 
         # THE CODE BELOW ALSO OCCASIONALLY BREAKS I DUNNO WHY
         if len(self.sell_list) > 0:  # if there's anything to check in the list
             finished_trades = []
             for trades in xrange(len(self.sell_list)):  # cycles through all trades
-                if self.tick >= self.sell_list[trades][2]:  # if current tick matches tick+travel time
-                    self.company_money += self.sell_list[trades][3] * self.sell_list[trades][4]
-                    self.minerals_in_transit_sell[self.sell_list[trades][5]][self.sell_list[trades][6]] -= self.sell_list[trades][4]
+                if self.tick >= self.sell_list[trades][7]:  # if current tick matches tick+travel time
+                    self.company_money += self.sell_list[trades][0] * self.sell_list[trades][6]  # profit is price sold * amount
+                    self.minerals_in_transit_sell[self.sell_list[trades][3]][self.sell_list[trades][4]] -= self.sell_list[trades][6]
                     finished_trades.append(trades)  # create a list of all trades that were finished
-            # remove these trades separately to not confuse the for loop ^^^
-            print self.trade_list
-            print finished_trades
-            try:
-                if len(finished_trades) > 0:
-                    for finished_trade in finished_trades:
-                        list.remove(self.sell_list, self.sell_list[finished_trade])  # remove ongoing purchases from list.
-            finally:
-                return sale
+            if len(finished_trades) > 0:
+                for finished_trade in reversed(finished_trades):  # ITERATE IN REVERSE SO NO INDEX ERRORS WHEN REMOVING
+                    list.__delitem__(self.sell_list, finished_trade)  # remove ongoing purchases from list.
         return sale
