@@ -296,7 +296,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         liquid_rarity = element_rarity[1]
         solid_rarity = element_rarity[2]
 
-        max_value = 200000
+        max_value = 300000
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
         for mineral_group in xrange(0, 3):
             # 1st loop cycles through mineral groups
@@ -321,7 +321,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 self.price_sell[mineral_group][mineral] = sell_base_price
 
                 if self.need[mineral_group][mineral] > 0:
-                    buy_base_price = self.need[mineral_group][mineral] / 20
+                    buy_base_price = self.need[mineral_group][mineral] / 30
                     buy_base_price *= all_minerals_rarity[mineral_group][mineral]
                     # for buy price, the idea is reversed so the result is: more minerals needed = pay more
                     random_price_change = random.randint(1, 2)
@@ -356,15 +356,16 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.low_price_sell = [[100000] * 10, [100000] * 10, [100000] * 10]
 
     def remove_minerals(self, purchase):
-        if purchase[1] == self.name:
-            self.minerals[purchase[2]][purchase[3]] -= purchase[0]
-            print "success selling"
+        if len(purchase) > 7:
+            if purchase[1] == self.name:
+                self.minerals[purchase[2]][purchase[3]] -= purchase[7]
+                print "success selling"
 
     def buy_minerals(self, sale):
-        print sale
-        if sale[1] == self.name:
-            self.minerals[sale[2]][sale[3]] -= sale[0]
-            print "success buying"
+        if len(sale) > 0:
+            if sale[1] == self.name:
+                self.minerals[sale[5]][sale[6]] -= sale[4]
+                print "success buying"
 
 
 class Elements(object):
@@ -461,6 +462,7 @@ class DataAggregator(object):
                     current_length = len(mineral_sell_price_lists[mineral_group][mineral_price])
                     for planet_price in xrange(0, current_length, 2):
                             current_planet_price = mineral_sell_price_lists[mineral_group][mineral_price][planet_price]
+                            int(round(current_planet_price))
                             current_planet_price_name = mineral_sell_price_lists[mineral_group][mineral_price][planet_price+1]
                             current_planet_details = [current_planet_price, current_planet_price_name]
                             if current_planet_details[0] < mineral_best_sell_price[mineral_group][mineral_price][0]:
@@ -499,7 +501,8 @@ class DataAggregator(object):
 
 class Company(object):  # Company class creates all variables for individual planets
     # The class "constructor"
-    def __init__(self, planet_locations, number_of_planets, mineral_best_buy_prices, mineral_best_sell_prices, planets, fuel_price, tick):
+    def __init__(self, elements, planet_locations, number_of_planets, mineral_best_buy_prices, mineral_best_sell_prices, planets, fuel_price, tick):
+        self.elements = elements
         self.planets = planets
         self.number_of_planets = number_of_planets
         self.planet_locations = planet_locations
@@ -518,8 +521,11 @@ class Company(object):  # Company class creates all variables for individual pla
 
         self.company_minerals = [0]*10, [0]*10, [0]*10
         self.average_prices_bought_for = [0] * 10, [0] * 10, [0] * 10
-        self.purchase = self.decide_to_buy()
         self.trade_list = []
+        self.sell_list = []
+        self.purchase = self.decide_to_buy()
+        self.sale = self.sell_minerals()
+
 
     def create_company_name(self):
         named_or_abbrv = random.randint(1, 2)
@@ -586,7 +592,7 @@ class Company(object):  # Company class creates all variables for individual pla
     def take_cost_of_fuel_per_unit(self):
 
         fuel_cost = self.calculate_fuel_cost()  # get fuel cost to each planet
-        after_fuel_cost = self.evaluate_planet_prices() # get mineral profit potential
+        after_fuel_cost = self.evaluate_planet_prices()  # get mineral profit potential from planets SELLING minerals
         for mineral_group in xrange(0, 3):  # loop through mineral group
             for mineral in xrange(0, 10):  # loop through minerals
                 for mineral_price in xrange(0, 2, 2):  # iterates 2 steps to skip planets name
@@ -599,91 +605,143 @@ class Company(object):  # Company class creates all variables for individual pla
         # in the fuel cost list, that fuel cost is deducted from the profit potential
         return after_fuel_cost
 
+    def most_profitable_mineral(self):
+
+        possible_trades = self.take_cost_of_fuel_per_unit()
+        previous_amount = [0, ""]
+        chosen_amount = []
+        planet_distance = 0
+
+        for mineral_group in xrange(0, 3):  # cycle through mineral groups
+                    for mineral in xrange(0, 10):  # cycle through minerals
+                        current_amount = possible_trades[mineral_group][mineral]  # current amount to be tested
+                        if current_amount[0] > previous_amount[0]:  # if current amount is higher than previous
+                            previous_amount[0] = current_amount[0]  # number to be tested against is updated
+                            # Then create purchase list by..
+                            for planet in xrange(0, self.number_of_planets):  # finding the distance of the planet selling
+                                if current_amount[1] == self.planets[planet].name:  # if planet name matches purchase
+                                    planet_distance = self.planet_distances[planet]  # use that planets distance
+                            mineral_price = self.mineral_best_sell_prices[mineral_group][mineral][0]  # find original price
+                            mineral_name = self.elements[mineral_group][mineral]  # find mineral name
+                            chosen_amount = [
+                                mineral_price,  # price
+                                possible_trades[mineral_group][mineral][0],  # potential profit
+                                possible_trades[mineral_group][mineral][1],  # planet name
+                                planet_distance,  # distance from planet
+                                mineral_group,  # mineral group index
+                                mineral,  # mineral index
+                                mineral_name  # mineral name
+                            ]
+        return chosen_amount
+
     def decide_to_buy(self):
-        best_price = [0]
-        # In this function the company decides what mineral to buy and at the end creates a purchase list
-        # the list contains, the amount of minerals to buy, where to buy them from, and list target locations
-        # for the mineral to buy. so [0]
-        if self.company_money > 1000:
-            possible_trades = self.take_cost_of_fuel_per_unit()
-            list_of_prices = []
-            previous_amount = 0
-            for mineral_group in xrange(0, 3):
-                for mineral in xrange(0, 10):
-                    current_amount = possible_trades[mineral_group][mineral][0]
-                    if current_amount >= previous_amount:
-                        chosen_amount = possible_trades[mineral_group][mineral]
-                        best_price = chosen_amount
-                    previous_amount = current_amount
-                    # print list_of_prices
-            for mineral_group in xrange(0, 3):
-                for mineral in xrange(0, 10):
-                    if best_price[1] == possible_trades[mineral_group][mineral][1]:
-                        if best_price[0] == possible_trades[mineral_group][mineral][0]:
-                            best_price.append(mineral_group)
-                            best_price.append(mineral)
-                            best_price.append(self.mineral_best_sell_prices[mineral_group][mineral][0])
-                            for planet in xrange(0, self.number_of_planets):
-                                if best_price[1] == self.planets[planet].name:
-                                    best_price.append(self.planet_distances[planet])
-                            best_price.append(0)
-                print best_price
-                        # Creates a purchase list, with amount of minerals to buy, planet, mineral index and price to buy for.
-        if best_price[0] > 0:  # if there is any profit to be made.
-            if best_price[4] < 1000:  # and if purchase price is reasonable we continue to create a purchase
-                risk = ["Low", "Medium", "High"]
-                decide_how_risky = random.choice(risk)  # choose how "risky" to be, spend more or less
-                amount_to_spend = self.company_money
-                if decide_how_risky == "Low":
-                    amount_to_spend /= random.randint(5, 10)
-                elif decide_how_risky == "Medium":
-                    amount_to_spend /= random.randint(3, 7)
-                elif decide_how_risky == "High":
-                    amount_to_spend /= random.randint(2, 5)
-                # change amount of company money to spend. will never spend more than half
-                amount_can_buy = amount_to_spend / best_price[0]
-                amount_can_buy = floor(amount_can_buy)
-                amount_can_buy = int(round(amount_can_buy))
-                # calculate amount of minerals to buy and round down the result, then convert to int
+        purchase = self.most_profitable_mineral()
+        if (self.company_money / 2) >= 1000:  # If the company has at least a 1000 credits, it will spend money
 
-                purchase = best_price
-                purchase[0] = amount_can_buy
-                # finalise purchase by adding amount of minerals to purchase
-                trade_timer = purchase[5]+self.tick
-                purchase[6] = trade_timer
-                if amount_can_buy > 0:  # if all is correct and there is an amount of buy-able minerals
-                    self.company_money -= amount_can_buy*best_price[4]  # remove cost from total money
-                    # self.company_minerals[purchase[2]][purchase[3]] += amount_can_buy  # add mineral level to mineral stores.
-                    # this is targeting the mineral index of [n][n] which remains the same in every list minerals exist in
-                    if self.average_prices_bought_for[purchase[2]][purchase[3]] > 0:
-                        self.average_prices_bought_for[purchase[2]][purchase[3]] += purchase[4]
-                        self.average_prices_bought_for[purchase[2]][purchase[3]] /= 2
-                    else:
-                        self.average_prices_bought_for[purchase[2]][purchase[3]] += purchase[4]
-                if len(purchase) == 6:
-                    return purchase
-                else:
-                    return
+            amount_to_spend = self.company_money / 2  # company wont spend over half its money in one turn
+            # amount_to_spend /= random.randint(1, 3)  # randomly decide to be less risky
 
-    # def trade_list_timer(self, purchase):
-    #     self.trade_list.append(purchase)
-    #     for trades in xrange(len(self.trade_list)):
-    #         if self.tick >= purchase[6]:
-    #             self.company_minerals[purchase[2]][purchase[3]] += purchase[0]  # add mineral level to mineral stores.
-    #             self.trade_list.pop(trades)
+            amount_of_minerals_can_buy = 0
 
-    # def sell_the_minerals(self):
-    #     for mineral_group in xrange(0, 3):
-    #         for mineral in xrange(0, 10):
-    #             if self.company_minerals[mineral_group][mineral] > 0:
-    #                 if self.average_prices_bought_for[mineral_group][mineral] < self.mineral_best_sell_prices[mineral_group][mineral][0]:
-    #                     planet_to_sell_at = self.mineral_best_sell_prices[mineral_group][mineral][1]
-    #                     amount_planet_want_to_buy = self.company_minerals[mineral_group][mineral]
-    #                     if amount_planet_want_to_buy >= 1000:
-    #                         amount_planet_want_to_buy = 1000
-    #                     print amount_planet_want_to_buy
-    #                     sale = [amount_planet_want_to_buy, self.mineral_best_sell_prices[mineral_group][mineral][1],mineral_group,mineral]
-    #                     self.company_minerals[mineral_group][mineral] -= amount_planet_want_to_buy
-    #                     self.company_money += self.mineral_best_sell_prices[mineral_group][mineral][0]
-    #                     print sale
-    #                     return sale
+            if purchase[0] > 0:
+                amount_of_minerals_can_buy = amount_to_spend / purchase[0]  # divide total money over cost of minerals
+                amount_of_minerals_can_buy = floor(amount_of_minerals_can_buy)  # round number down
+                amount_of_minerals_can_buy = int(round(amount_of_minerals_can_buy))  # convert to int
+
+            if amount_of_minerals_can_buy >= 500:
+                amount_of_minerals_can_buy = 500  # add limit to purchase number
+
+            purchase.append(amount_of_minerals_can_buy)  # finalise purchase by adding amount of minerals
+            trade_timer = purchase[3]+self.tick  # sets a finish date for the purchase in ticks
+            purchase.append(trade_timer)
+            # pay the cost of the minerals
+            fuel_cost = 0
+            for planet in xrange(0, self.number_of_planets):
+                if purchase[2] == self.total_fuel_cost[planet][1]:
+                    fuel_cost = self.total_fuel_cost[planet][0]
+            self.company_money -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)
+            # self.company_minerals[purchase[4]][purchase[5]] += purchase[7]
+
+            # some of this is a bit complicated but it works.
+            if purchase[7] > 0:
+                self.trade_list.append(purchase)  # create a list of all trades
+
+        if len(purchase) > 7:  # if actual purchase was made
+            if purchase[0] > 0:  # calculate average price by dividing new price and last price paid by 2
+                self.average_prices_bought_for[purchase[4]][purchase[5]] += purchase[0]
+                self.average_prices_bought_for[purchase[4]][purchase[5]] /= 2
+            else:
+                self.average_prices_bought_for[purchase[4]][purchase[5]] = purchase[0]
+
+        if len(self.trade_list) > 0:  # if there's anything to check in the list
+            finished_trades = []
+            for trades in xrange(len(self.trade_list)):  # cycles through all trades
+                if self.tick >= self.trade_list[trades][8]:  # if current tick matches tick+travel time5
+                    self.company_minerals[self.trade_list[trades][4]][self.trade_list[trades][5]] += self.trade_list[trades][7]
+                    # the purchase is finalised by adding the minerals once time is reached
+                    finished_trades.append(trades)  # create a list of all trades that were finished
+            # remove these trades separately to not confuse the for loop ^^^
+            if len(finished_trades) > 0:
+                for finished_trades in finished_trades:
+                    list.remove(self.trade_list, self.trade_list[finished_trades])  # remove ongoing purchases from list.
+
+        return purchase
+
+    def take_cost_of_fuel_per_unit_sale(self):
+
+        fuel_cost = self.total_fuel_cost  # get fuel cost to each planet
+        after_fuel_cost_sale = self.mineral_best_buy_prices  # get highest price planets will BUY at
+        for mineral_group in xrange(0, 3):  # loop through mineral group
+            for mineral in xrange(0, 10):  # loop through minerals
+                for mineral_price in xrange(0, 2, 2):  # iterates 2 steps to skip planets name
+                    for planet_fuel_cost in xrange(0, self.number_of_planets):  # loop through each planets planet fuel cost
+                        if fuel_cost[planet_fuel_cost][1] == after_fuel_cost_sale[mineral_group][mineral][mineral_price+1]:
+                            after_fuel_cost_sale[mineral_group][mineral][mineral_price] -= fuel_cost[planet_fuel_cost][0]
+                            # ^^^^ THIS WORKS BUT SAYS IT SHOULDN'T!
+        # print fuel_cost[planet_fuel_cost]  # <--- this should mean there is still an iterable list with a length of 1
+        # if the planet name associated with the mineral being looked at matches a planet name
+        # in the fuel cost list, that fuel cost is deducted from the profit potential
+        return after_fuel_cost_sale
+
+    def sell_minerals(self):
+        sale = 'No Sale'
+        planets_buy_prices = self.take_cost_of_fuel_per_unit_sale()
+        for mineral_group in xrange(0, 3):  # loop through mineral group
+            for mineral in xrange(0, 10):  # loop through minerals
+                if self.company_minerals[mineral_group][mineral] > 0:
+                    if planets_buy_prices[mineral_group][mineral][0] > self.average_prices_bought_for[mineral_group][mineral]:
+                        # sell the minerals
+                        number_of_minerals = self.company_minerals[mineral_group][mineral]  # minerals available
+                        planet_to_sell_to = planets_buy_prices[mineral_group][mineral][1]
+                        for planet in xrange(0, self.number_of_planets):  # finding the distance of the planet selling
+                            if planets_buy_prices[mineral_group][mineral][1] == self.planets[planet].name:  # if planet name matches purchase
+                                planet_distance = self.planet_distances[planet]+self.tick  # use that planets distance
+                        price_sold_for = planets_buy_prices[mineral_group][mineral]
+                        amount_sold = self.company_minerals[mineral_group][mineral]
+                        if amount_sold >= 500:
+                            amount_sold = 500
+                        sale = [
+                            number_of_minerals,
+                            planet_to_sell_to,
+                            planet_distance,
+                            price_sold_for[0],
+                            amount_sold,
+                            mineral_group,
+                            mineral
+                        ]
+                        self.company_minerals[mineral_group][mineral] -= amount_sold
+                        if sale[4] > 0:
+                            self.sell_list.append(sale)  # create a list of all trades
+
+        if len(self.sell_list) > 0:  # if there's anything to check in the list
+            finished_trades = []
+            for trades in xrange(len(self.sell_list)):  # cycles through all trades
+                if self.tick >= self.sell_list[trades][2]:  # if current tick matches tick+travel time
+                    self.company_money += self.sell_list[trades][3] * self.sell_list[trades][4]
+                    finished_trades.append(trades)  # create a list of all trades that were finished
+            # remove these trades separately to not confuse the for loop ^^^
+            if len(finished_trades) >= 0:
+                for finished_trade in finished_trades:
+                    list.remove(self.sell_list, self.sell_list[finished_trade])  # remove ongoing purchases from list.
+
+        return sale
