@@ -27,8 +27,17 @@ mineral_high_buy_price, mineral_best_buy_price = DataAggregator(planets, number_
 # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
 fuel_change = 0  # declared here because company needs it as arg
 tick = 0
+
 # THIS IS THE COMPANY LOGIC
-company = Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick)
+companies = [Company(
+    elements,
+    location_list,
+    number_of_planets,
+    mineral_best_sell_price,
+    mineral_best_buy_price,
+    planets, fuel_change,
+    tick)
+    for company in xrange(number_of_planets)]
 
 fuel_price = FuelPrices()
 tags = ["gas", "liquid", "solid"]
@@ -68,31 +77,36 @@ for tick in xrange(1, 10000):
     mineral_high_buy_price, mineral_best_buy_price = DataAggregator(planets, number_of_planets).mineral_highest_buy_prices
     # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
     # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
+    for company in xrange(0, number_of_planets):
+        companies[company].mineral_best_buy_prices = mineral_best_buy_price  # give company price data to work with
+        companies[company].mineral_best_sell_prices = mineral_best_sell_price
+        companies[company].fuel_price = fuel_price.fuel_price  # find fuel price for company
+        companies[company].total_fuel_cost = companies[company].calculate_fuel_cost()  # find out the cost of fuel to each planet
+        companies[company].profit_potential = companies[company].evaluate_planet_prices()
+        # company evaluates the prices seeing which mineral has the most potential for profit
+        companies[company].profit_minus_fuel = companies[company].take_cost_of_fuel_per_unit()  # take that cost away from the profit potential
 
-    company.mineral_best_buy_prices = mineral_best_buy_price  # give company price data to work with
-    company.mineral_best_sell_prices = mineral_best_sell_price
-    company.fuel_price = fuel_price.fuel_price  # find fuel price for company
-    fuel_cost = company.calculate_fuel_cost()  # find out the cost of fuel to each planet
-    company_profit_potential = company.evaluate_planet_prices()
-    # company evaluates the prices seeing which mineral has the most potential for profit
-    profit_minus_fuel_cost = company.take_cost_of_fuel_per_unit()  # take that cost away from the profit potential
-
-    company.tick = tick
+        companies[company].tick = tick
 
     if tick >= 1000:
         # time.sleep(1)
+        for company in xrange(0, number_of_planets):
+            companies[company].purchase = companies[company].decide_to_buy()
+            purchase = companies[company].purchase
 
-        company.purchase = company.decide_to_buy()
-        purchase = company.purchase
+            companies[company].sale = companies[company].sell_minerals()
+            sale = companies[company].sale
 
-        company.sale = company.sell_minerals()
-        sale = company.sale
-
-        for planet in xrange(0, number_of_planets):  # cycles through each planet
-            planets[planet].remove_minerals(purchase)  # remove minerals from planets when companies purchase them
-            planets[planet].buy_minerals(sale)  # add minerals to planets planets when companies make a sale to them
+            for planet in xrange(0, number_of_planets):  # cycles through each planet
+                planets[planet].remove_minerals(purchase)  # remove minerals from planets when companies purchase them
+                planets[planet].buy_minerals(sale)  # add minerals to planets planets when companies make a sale to them
 
         # PRINTING --------------------------------------------------------------------------------------------------
+        # OVERALL STATS
+        for mineral_group in xrange(0, 3):
+            print "BEST LOW SELL PRICE-", tags[mineral_group], mineral_best_sell_price[mineral_group]
+        for mineral_group in xrange(0, 3):
+            print "BEST HIGH BUY PRICE-", tags[mineral_group], mineral_best_buy_price[mineral_group]
         for planet in planets:
             # planet = planets[int(raw_input("Choose planet number to view"))]
             print "---------------------------------------------------------------------"
@@ -123,31 +137,27 @@ for tick in xrange(1, 10000):
             print "LOW PRICE BUY     -", planet.low_price_buy
             print "Turns requ inc/dec-", planet.how_many_times_requirement_changed
             print "---------------------------------------------------------------------"
-        # company statistics
-        for mineral_group in xrange(0, 3):
-            print "BEST LOW SELL PRICE-", tags[mineral_group], mineral_best_sell_price[mineral_group]
-        for mineral_group in xrange(0, 3):
-            print "BEST HIGH BUY PRICE-", tags[mineral_group], mineral_best_buy_price[mineral_group]
-        print "Company name", company.name
-        print "PLANET DISTANCES", company.planet_distances
-        print "Company Location", company.company_locations
-        print "Company Profit Potential list-", company_profit_potential
-        print "Company fuel cost            -", fuel_cost
-        print "Profit Potential After Fuel  -", profit_minus_fuel_cost
-        print "Company Money", locale.format('%d', company.company_money, grouping=True)
-        print "Company Minerals", company.company_minerals
-        print "Average Price Paid", company.average_prices_bought_for
-        print "PURCHASE", company.purchase
-        print "PURCHASE LIST", company.trade_list
-        print 'SALE', company.sale
-        print 'SALE LIST', company.sell_list
-        print 'minerals in transit bought', company.minerals_in_transit_bought
-        print 'minerals in transit sell', company.minerals_in_transit_sell
-        print elements_rarity
-        print elements
-        print fuel_price.fuel_price
-        print company.tick
-        print tick
+        for company in companies:
+            print "Company name", company.name
+            print "PLANET DISTANCES", company.planet_distances
+            print "Company Location", company.company_locations
+            print "Company Profit Potential list-", company.profit_potential
+            print "Company fuel cost            -", company.total_fuel_cost
+            print "Profit Potential After Fuel  -", company.profit_minus_fuel
+            print "Company Money", locale.format('%d', company.company_money, grouping=True)
+            print "Company Minerals", company.company_minerals
+            print "Average Price Paid", company.average_prices_bought_for
+            print "PURCHASE", company.purchase
+            print "PURCHASE LIST", company.trade_list
+            print 'SALE', company.sale
+            print 'SALE LIST', company.sell_list
+            print 'minerals in transit bought', company.minerals_in_transit_bought
+            print 'minerals in transit sell', company.minerals_in_transit_sell
+            print elements_rarity
+            print elements
+            print fuel_price.fuel_price
+            print company.tick
+            print tick
 
     my_mongo_update(number_of_planets,
                     planets,
