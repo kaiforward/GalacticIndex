@@ -29,12 +29,11 @@ fuel_change = 0  # declared here because company needs it as arg
 tick = 0
 # THIS IS THE COMPANY LOGIC
 company_locations = create_all_company_locations(number_of_planets, location_list)
+# assign company locations to existing planets locations ^^
 companies = [Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick, company_locations[company]) for company in xrange(number_of_planets)]
 
-
-
 fuel_price = FuelPrices()
-tags = ["gas", "liquid", "solid"]
+tags = ["GAS", "LIQUID", "SOLID"]
 price_check = 0  # check with yoni how to use tick if i need to reset it?
 
 collection = my_mongo_insert(
@@ -135,34 +134,40 @@ for tick in xrange(1, 10000):
             print "Turns requ inc/dec-", planet.how_many_times_requirement_changed
             print "---------------------------------------------------------------------"
         # company statistics
-        for mineral_group in xrange(0, 3):
-            print "BEST LOW SELL PRICE-", tags[mineral_group], mineral_best_sell_price[mineral_group]
-        for mineral_group in xrange(0, 3):
-            print "BEST HIGH BUY PRICE-", tags[mineral_group], mineral_best_buy_price[mineral_group]
         for company in companies:
             print "---------------------------"
             print "Company name", company.name
             print "PLANET DISTANCES", company.planet_distances
             print "Company Location", company.company_locations
+            print "Company Money", locale.format('%d', company.company_money, grouping=True)
+            print 'SIZE OF SPACEPORT', company.size_of_spaceport
+            print "NUMBER OF SHIPS", company.number_of_ships
+            print ""
             print "Company Profit Potential list-", company.profit_potential
             print "Company fuel cost            -", company.total_fuel_cost
             print "Profit Potential After Fuel  -", company.profit_minus_fuel
-            print "Company Money", locale.format('%d', company.company_money, grouping=True)
+            print ""
             print "Company Minerals", company.company_minerals
             print "Average Price Paid", company.average_prices_bought_for
+            print 'minerals in transit bought', company.minerals_in_transit_bought
+            print 'minerals in transit sell', company.minerals_in_transit_sell
+            print ""
             print "PURCHASE", company.purchase
             print "PURCHASE LIST", company.trade_list
             print 'SALE', company.sale
             print 'SALE LIST', company.sell_list
-            print 'minerals in transit bought', company.minerals_in_transit_bought
-            print 'minerals in transit sell', company.minerals_in_transit_sell
-            print 'SIZE OF SPACEPORT', company.size_of_spaceport
-            print "NUMBER OF SHIPS", company.number_of_ships
-            print elements_rarity
-            print elements
-            print "Fuel Price", fuel_price.fuel_price
             print "Company Timer", company.tick
-            print "Galactic Cycle", tick
+            print ""
+        print "GALAXY STATISTICS -------------------------"
+        print elements_rarity
+        print elements
+        print "Fuel Price", fuel_price.fuel_price
+        print "Galactic Cycle", tick
+        print "-------------------------------------------"
+        for mineral_group in xrange(0, 3):
+            print "BEST LOW SELL PRICE-", tags[mineral_group], mineral_best_sell_price[mineral_group]
+        for mineral_group in xrange(0, 3):
+            print "BEST HIGH BUY PRICE-", tags[mineral_group], mineral_best_buy_price[mineral_group]
 
     my_mongo_update(number_of_planets,
                     planets,
