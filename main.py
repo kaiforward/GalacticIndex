@@ -1,5 +1,5 @@
 from create_system import CreateGalaxySize, Elements, Planet, Company, DataAggregator, FuelPrices  # import my classes
-from create_system import create_locations, create_all_planet_locations  # import my classes
+from create_system import create_all_planet_locations, create_all_company_locations  # import my classes
 from my_mongo import my_mongo_insert, my_mongo_update
 
 import time
@@ -28,8 +28,10 @@ mineral_high_buy_price, mineral_best_buy_price = DataAggregator(planets, number_
 fuel_change = 0  # declared here because company needs it as arg
 tick = 0
 # THIS IS THE COMPANY LOGIC
+company_locations = create_all_company_locations(number_of_planets, location_list)
+companies = [Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick, company_locations[company]) for company in xrange(number_of_planets)]
 
-companies = [Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick) for company in xrange(number_of_planets)]
+
 
 fuel_price = FuelPrices()
 tags = ["gas", "liquid", "solid"]
@@ -71,6 +73,7 @@ for tick in xrange(1, 10000):
         # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
         # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     for company in companies:
+        company.choose_to_improve()  # decide to improve size of spaceport or number of ships
         company.mineral_best_buy_prices = mineral_best_buy_price  # give company price data to work with
         company.mineral_best_sell_prices = mineral_best_sell_price
         company.fuel_price = fuel_price.fuel_price  # find fuel price for company
@@ -104,6 +107,7 @@ for tick in xrange(1, 10000):
             # planet = planets[int(raw_input("Choose planet number to view"))]
             print "---------------------------------------------------------------------"
             print "Planet Name -", planet.name
+            print "locations   -", planet.location
             print "Habitable -", planet.habitable
             print "Climate -", planet.climate
             print "Economic Status -", planet.economic
@@ -152,6 +156,8 @@ for tick in xrange(1, 10000):
             print 'SALE LIST', company.sell_list
             print 'minerals in transit bought', company.minerals_in_transit_bought
             print 'minerals in transit sell', company.minerals_in_transit_sell
+            print 'SIZE OF SPACEPORT', company.size_of_spaceport
+            print "NUMBER OF SHIPS", company.number_of_ships
             print elements_rarity
             print elements
             print "Fuel Price", fuel_price.fuel_price

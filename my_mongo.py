@@ -73,10 +73,18 @@ def my_mongo_insert(
     # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     insert_high_low_prices = [
         {"Name": "Collator",
-         "Low Prices": mineral_low_sell_price,
-         "Best low prices": mineral_best_sell_price,
-         "High Prices": mineral_high_buy_price,
-         "Best high prices": mineral_best_buy_price}]
+         "Low Prices Gas": mineral_low_sell_price[0],
+         "Low Prices Liquid": mineral_low_sell_price[1],
+         "Low Prices Solid": mineral_low_sell_price[2],
+         "Best low prices Gas": mineral_best_sell_price[0],
+         "Best low prices Liquid": mineral_best_sell_price[1],
+         "Best low prices Solid": mineral_best_sell_price[2],
+         "High Prices Gas": mineral_high_buy_price[0],
+         "High Prices Liquid": mineral_high_buy_price[1],
+         "High Prices Solid": mineral_high_buy_price[2],
+         "Best high prices Gas": mineral_best_buy_price[0],
+         "Best high prices Liquid": mineral_best_buy_price[1],
+         "Best high prices Solid": mineral_best_buy_price[2]}]
     collection.insert(insert_high_low_prices)
     # -------------------------------------------
     return collection
@@ -128,12 +136,19 @@ def my_mongo_update(
         }}
         collection.update(update_company_selector, update_company)
 
-
     update_best_prices_selector = {"Name": "Collator"}
-    update_best_prices_info = {"$set": {"Low Prices": mineral_low_sell_price,
-                                        "Best low prices": mineral_best_sell_price,
-                                        "High Prices": mineral_high_buy_price,
-                                        "Best high prices": mineral_best_buy_price}}
+    update_best_prices_info = {"$set": {"Low Prices Gas": mineral_low_sell_price[0],
+                                        "Low Prices Liquid": mineral_low_sell_price[1],
+                                        "Low Prices Solid": mineral_low_sell_price[2],
+                                        "Best low prices Gas": mineral_best_sell_price[0],
+                                        "Best low prices Liquid": mineral_best_sell_price[1],
+                                        "Best low prices Solid": mineral_best_sell_price[2],
+                                        "High Prices Gas": mineral_high_buy_price[0],
+                                        "High Prices Liquid": mineral_high_buy_price[1],
+                                        "High Prices Solid": mineral_high_buy_price[2],
+                                        "Best high prices Gas": mineral_best_buy_price[0],
+                                        "Best high prices Liquid": mineral_best_buy_price[1],
+                                        "Best high prices Solid": mineral_best_buy_price[2]}}
     # UPDATE VALUES
     collection.update(update_best_prices_selector, update_best_prices_info)
 
