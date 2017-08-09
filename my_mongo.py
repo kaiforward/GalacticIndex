@@ -24,24 +24,59 @@ def my_mongo_insert(
         mineral_low_sell_price,
         mineral_best_sell_price,
         mineral_high_buy_price,
-        mineral_best_buy_price):
+        mineral_best_buy_price,
+        companies):
 
     collection = open_collection()
     collection.drop()  # remove the collection
     # CREATE INITIAL INSERT OF ALL PLANETS
     for planet in xrange(0, number_of_planets):
-        insert_planet = [{"name": planets[planet].name, "Habitable": planets[planet].habitable, "Climate": planets[planet].climate,
-                          "Location": planets[planet].location, "Economic Status": planets[planet].economic,
-                          "Minerals Gas": planets[planet].minerals[0], "Minerals Liquid": planets[planet].minerals[1],
-                          "Minerals Solid": planets[planet].minerals[2], "Sell Price": planets[planet].price_sell,
-                          "Minerals Need": planets[planet].need, "Buy Price": planets[planet].price_buy}]
+        insert_planet = [{"name": planets[planet].name,
+                          "Habitable": planets[planet].habitable,
+                          "Climate": planets[planet].climate,
+                          "Location": planets[planet].location,
+                          "Economic Status": planets[planet].economic,
+                          "Population": planets[planet].population,
+                          "Minerals Gas": planets[planet].minerals[0],
+                          "Minerals Liquid": planets[planet].minerals[1],
+                          "Minerals Solid": planets[planet].minerals[2],
+                          "Sell Price Gas": planets[planet].price_sell[0],
+                          "Sell Price Liquid": planets[planet].price_sell[1],
+                          "Sell Price Solid": planets[planet].price_sell[2],
+                          "Minerals Need Gas": planets[planet].need[0],
+                          "Minerals Need Liquid": planets[planet].need[1],
+                          "Minerals Need Solid": planets[planet].need[2],
+                          "Buy Price Gas": planets[planet].price_buy[0],
+                          "Buy Price Liquid": planets[planet].price_buy[1],
+                          "Buy Price Solid": planets[planet].price_buy[2]
+                          }]
         # INSERT FIRST PLANET
         collection.insert(insert_planet)
 
+    for company in xrange(0, number_of_planets):
+        insert_company = [{"name": companies[company].name,
+                           "Money": companies[company].company_money,
+                           "Minerals Gas": companies[company].company_minerals[0],
+                           "Minerals Liquid": companies[company].company_minerals[1],
+                           "Minerals Solid": companies[company].company_minerals[2],
+                           "Minerals Gas in Transit Bought": companies[company].minerals_in_transit_bought[0],
+                           "Minerals Liquid in Transit Bought": companies[company].minerals_in_transit_bought[1],
+                           "Minerals Solid in Transit Bought": companies[company].minerals_in_transit_bought[2],
+                           "Minerals Gas in Transit Sold": companies[company].minerals_in_transit_sell[0],
+                           "Minerals Liquid in Transit Sold": companies[company].minerals_in_transit_sell[1],
+                           "Minerals Solid in Transit Sold": companies[company].minerals_in_transit_sell[2],
+                           "Trade List": companies[company].trade_list,
+                           "Sell List": companies[company].sell_list
+                           }]
+        collection.insert(insert_company)
+
     # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     insert_high_low_prices = [
-        {"Name": "Collator", "Low Prices": mineral_low_sell_price, "Best low prices": mineral_best_sell_price,
-         "High Prices": mineral_high_buy_price, "Best high prices": mineral_best_buy_price}]
+        {"Name": "Collator",
+         "Low Prices": mineral_low_sell_price,
+         "Best low prices": mineral_best_sell_price,
+         "High Prices": mineral_high_buy_price,
+         "Best high prices": mineral_best_buy_price}]
     collection.insert(insert_high_low_prices)
     # -------------------------------------------
     return collection
@@ -54,21 +89,51 @@ def my_mongo_update(
         mineral_best_sell_price,
         mineral_high_buy_price,
         mineral_best_buy_price,
-        collection):
+        collection,
+        companies):
     # MY MONGO UPDATE CALLED EVERY TICK TO UPDATE NEW PLANET VALUES.
     # CREATE UPDATE
     for planet in xrange(0, number_of_planets):
-        update_doc_selector = {"name": planets[planet].name}
-        update_doc = {"$set": {"Minerals Gas": planets[planet].minerals[0], "Minerals Liquid": planets[planet].minerals[1],
-                               "Minerals Solid": planets[planet].minerals[2], "Sell Price": planets[planet].price_sell,
-                               "Minerals Need": planets[planet].need,
-                               "Buy Price": planets[planet].price_buy}}
+        update_planet_selector = {"name": planets[planet].name}
+        update_planet = {"$set": {"Minerals Gas": planets[planet].minerals[0],
+                                  "Minerals Liquid": planets[planet].minerals[1],
+                                  "Minerals Solid": planets[planet].minerals[2],
+                                  "Sell Price Gas": planets[planet].price_sell[0],
+                                  "Sell Price Liquid": planets[planet].price_sell[1],
+                                  "Sell Price Solid": planets[planet].price_sell[2],
+                                  "Minerals Need Gas": planets[planet].need[0],
+                                  "Minerals Need Liquid": planets[planet].need[1],
+                                  "Minerals Need Solid": planets[planet].need[2],
+                                  "Buy Price Gas": planets[planet].price_buy[0],
+                                  "Buy Price Liquid": planets[planet].price_buy[1],
+                                  "Buy Price Solid": planets[planet].price_buy[2]}}
         # UPDATE VALUES
-        collection.update(update_doc_selector, update_doc)
+        collection.update(update_planet_selector, update_planet)
+
+    for company in xrange(0, number_of_planets):
+        update_company_selector = {"name": companies[company].name}
+        update_company = {"$set": {
+                           "Money": companies[company].company_money,
+                           "Minerals Gas": companies[company].company_minerals[0],
+                           "Minerals Liquid": companies[company].company_minerals[1],
+                           "Minerals Solid": companies[company].company_minerals[2],
+                           "Minerals Gas in Transit Bought": companies[company].minerals_in_transit_bought[0],
+                           "Minerals Liquid in Transit Bought": companies[company].minerals_in_transit_bought[1],
+                           "Minerals Solid in Transit Bought": companies[company].minerals_in_transit_bought[2],
+                           "Minerals Gas in Transit Sold": companies[company].minerals_in_transit_sell[0],
+                           "Minerals Liquid in Transit Sold": companies[company].minerals_in_transit_sell[1],
+                           "Minerals Solid in Transit Sold": companies[company].minerals_in_transit_sell[2],
+                           "Trade List": companies[company].trade_list,
+                           "Sell List": companies[company].sell_list
+        }}
+        collection.update(update_company_selector, update_company)
+
 
     update_best_prices_selector = {"Name": "Collator"}
-    update_best_prices_info = {"$set": {"Low Prices": mineral_low_sell_price, "Best low prices": mineral_best_sell_price,
-                                        "High Prices": mineral_high_buy_price, "Best high prices": mineral_best_buy_price}}
+    update_best_prices_info = {"$set": {"Low Prices": mineral_low_sell_price,
+                                        "Best low prices": mineral_best_sell_price,
+                                        "High Prices": mineral_high_buy_price,
+                                        "Best high prices": mineral_best_buy_price}}
     # UPDATE VALUES
     collection.update(update_best_prices_selector, update_best_prices_info)
 

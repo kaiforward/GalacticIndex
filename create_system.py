@@ -63,8 +63,8 @@ class FuelPrices(object):
                 self.fuel_price = 10
         if random_change < 0.5:
             self.fuel_price -= 0.5
-            if self.fuel_price < 1:
-                self.fuel_price = 1
+            if self.fuel_price < 5:
+                self.fuel_price = 5
         return self.fuel_price
 
 
@@ -308,7 +308,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         liquid_rarity = element_rarity[1]
         solid_rarity = element_rarity[2]
 
-        max_value = 300000
+        max_value = 250000
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
         for mineral_group in xrange(0, 3):
             # 1st loop cycles through mineral groups
@@ -333,7 +333,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 self.price_sell[mineral_group][mineral] = sell_base_price
 
                 if self.need[mineral_group][mineral] > 0:
-                    buy_base_price = self.need[mineral_group][mineral] / 30
+                    buy_base_price = self.need[mineral_group][mineral] / 25
                     buy_base_price *= all_minerals_rarity[mineral_group][mineral]
                     # for buy price, the idea is reversed so the result is: more minerals needed = pay more
                     random_price_change = random.randint(1, 2)
@@ -369,15 +369,15 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
     def remove_minerals(self, purchase):  # if planet sells minerals
         if len(purchase) > 7:
-            if purchase[1] == self.name:
-                self.minerals[purchase[2]][purchase[3]] -= purchase[7]
-                print "success selling"
+            if purchase[2] == self.name:
+                self.minerals[purchase[4]][purchase[5]] -= purchase[7]
+                print "success selling", self.name
 
     def buy_minerals(self, sale):  # if planet buy minerals
         if len(sale) > 0:
-            if sale[1] == self.name:
-                self.minerals[sale[5]][sale[6]] += sale[4]
-                print "success buying"
+            if sale[2] == self.name:
+                self.minerals[sale[3]][sale[4]] += sale[6]
+                print "success buying", self.name
 
 
 class Elements(object):
@@ -468,7 +468,6 @@ class DataAggregator(object):
                             mineral_sell_price_lists[mineral_group][mineral_price].append(self.all_planets[planet].name)
 
             mineral_best_sell_price = self.create_mineral_sell_price_list()
-            # print mineral_best_sell_price[0][0][0]
             for mineral_group in xrange(0, 3):  # FINDS BEST SELL PRICES FOR EACH MINERAL ACROSS THE GALAXY (ALL PLANETS)
                 for mineral_price in xrange(0, 10):
                     current_length = len(mineral_sell_price_lists[mineral_group][mineral_price])
@@ -662,8 +661,8 @@ class Company(object):  # Company class creates all variables for individual pla
                     amount_of_minerals_can_buy = floor(amount_of_minerals_can_buy)  # round number down
                     amount_of_minerals_can_buy = int(round(amount_of_minerals_can_buy))  # convert to int
 
-                if amount_of_minerals_can_buy >= 500:
-                    amount_of_minerals_can_buy = 500  # add limit to purchase number
+                if amount_of_minerals_can_buy >= 10:
+                    amount_of_minerals_can_buy = 10  # add limit to purchase number
 
                 purchase.append(amount_of_minerals_can_buy)  # finalise purchase by adding amount of minerals
                 trade_timer = purchase[3]+self.tick  # sets a finish date for the purchase in ticks
@@ -676,7 +675,6 @@ class Company(object):  # Company class creates all variables for individual pla
                 self.company_money -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)
                 # self.company_minerals[purchase[4]][purchase[5]] += purchase[7]
 
-                # NOTHING WORKS!!!
                 if purchase[7] > 0:
                     self.trade_list.append(purchase)  # create a list of all trades
                     self.minerals_in_transit_bought[purchase[4]][purchase[5]] += purchase[7]
@@ -726,17 +724,16 @@ class Company(object):  # Company class creates all variables for individual pla
                 if self.company_minerals[mineral_group][mineral] > 0:
                     if planets_buy_prices[mineral_group][mineral][0] > self.average_prices_bought_for[mineral_group][mineral]:
                         # sell the minerals
-                        number_of_minerals = self.company_minerals[mineral_group][mineral]  # minerals available
                         planet_to_sell_to = planets_buy_prices[mineral_group][mineral][1]
                         for planet in xrange(0, self.number_of_planets):  # finding the distance of the planet selling
                             if planets_buy_prices[mineral_group][mineral][1] == self.planets[planet].name:  # if planet name matches purchase
-                                planet_distance = self.planet_distances[planet]+self.tick+1  # use that planets distance
+                                travel_time = self.planet_distances[planet]+self.tick+1  # use that planets distance
                         price_sold_for = planets_buy_prices[mineral_group][mineral]
                         amount_sold = self.company_minerals[mineral_group][mineral]
                         profit = price_sold_for[0] - self.average_prices_bought_for[mineral_group][mineral]
                         element = self.elements[mineral_group][mineral]
-                        if amount_sold >= 500:
-                            amount_sold = 500
+                        if amount_sold >= 10:
+                            amount_sold = 10
                         sale = [
                             price_sold_for[0],
                             profit,
@@ -745,22 +742,24 @@ class Company(object):  # Company class creates all variables for individual pla
                             mineral,
                             element,
                             amount_sold,
-                            planet_distance,
+                            travel_time,
                         ]
                         self.company_minerals[mineral_group][mineral] -= amount_sold  # remove minerals from saleable store
                         if sale[6] > 0:
                             self.sell_list.append(sale)  # create a list of all trades
                             self.minerals_in_transit_sell[sale[3]][sale[4]] += sale[6]
 
-        # THE CODE BELOW ALSO OCCASIONALLY BREAKS I DUNNO WHY
-        if len(self.sell_list) > 0:  # if there's anything to check in the list
+        # THE CODE BELOW ALSO OCCASIONALLY BREAKS I DUNNO WHY <--- THINK ITS FIXED
+        if len(self.sell_list) > 0:  # if there's any ongoing trades to check in the list
             finished_trades = []
             for trades in xrange(len(self.sell_list)):  # cycles through all trades
-                if self.tick >= self.sell_list[trades][7]:  # if current tick matches tick+travel time
+                if self.tick >= self.sell_list[trades][7]:  # if current tick matches tick + Travel Time
+                    # complete transaction by adding money made once goods have reached destination
                     self.company_money += self.sell_list[trades][0] * self.sell_list[trades][6]  # profit is price sold * amount
+                    # removes minerals from Transit list.
                     self.minerals_in_transit_sell[self.sell_list[trades][3]][self.sell_list[trades][4]] -= self.sell_list[trades][6]
                     finished_trades.append(trades)  # create a list of all trades that were finished
             if len(finished_trades) > 0:
-                for finished_trade in reversed(finished_trades):  # ITERATE IN REVERSE SO NO INDEX ERRORS WHEN REMOVING
-                    list.__delitem__(self.sell_list, finished_trade)  # remove ongoing purchases from list.
+                for finished_trade in reversed(finished_trades):  # ITERATE IN REVERSE SO NO INDEX ERRORS WHEN REMOVING - DOH
+                    list.__delitem__(self.sell_list, finished_trade)  # remove completed purchases from list.
         return sale
