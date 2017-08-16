@@ -26,8 +26,7 @@ The front end of the site will make extensive use of D3 for data visualisation, 
 - UPDATED: Companies now have have an amount of ships and spaceports, which limit their trade, if they earn enough they will buy more spaceports for more ships.
 
 ### Pages/Features Left to Implement
-- All front-end features stil
-l to be decided
+- All front-end features still to be decided
 - Connecting data with D3 frontend
 - Creating Companies
 - Finish Creating Companies so they can make purchases, show profit and that profit is translated into stock prices.
