@@ -21,7 +21,7 @@ The front end of the site will make extensive use of D3 for data visualisation, 
 - any amount of planets can be created and are randomly given the following attributes as well as many others: Name, Habitability, Climate, Resources, Required Resources, Buy/Sell Prices, x,y Locations
 - planets now experience crashes, booms and have different populations that affects other variables.
 - Companies are also created, with names and locations, At the moment they have the ability to look at the cheapest sell prices and best buy prices and determine the most profitable mineral at the current time.
-- they cannot currently do anything with information such as make an actual purchase and then look for an appropriate place to sell.
+- UPDATED: Companies can now buy and sell minerals, have expenses and profit levels, these profit levels dictate the stock prices for each company.
 
 ### Pages/Features Left to Implement
 - All front-end features stil to be decided
