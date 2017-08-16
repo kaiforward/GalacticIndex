@@ -72,6 +72,7 @@ for tick in xrange(1, 50000):
         # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
         # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     for company in companies:
+        company.stock_prices()
         # if company.company_money <= -100000:
         #     Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick, company_locations[company])
         company.remove_expenses()
