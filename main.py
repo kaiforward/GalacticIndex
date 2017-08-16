@@ -11,13 +11,13 @@ locale.setlocale(locale.LC_ALL, "")  # used to format some of the numbers in whe
 # number_of_planets = galaxy_size.number_of_planets
 # CHOOSE PLANET NUMBER ^^
 
-number_of_planets = random.randint(5, 10)
+number_of_planets = random.randint(20, 30)  # creates a number of planets, however many you want. try 1000 ;) (NO DON'T!)
 
 # create all the universal Elements. Always 30 of them, these are the minerals traded between planets.
 elements = Elements().create_elements()
 elements_rarity = Elements().assign_minerals_rarity()
 
-# CREATES THE PLANETS creates a number of planets, however many you want. try 1000 ;) (NO DON'T!)
+# CREATES THE PLANETS
 planets = [Planet() for x in xrange(number_of_planets)]
 location_list = create_all_planet_locations(number_of_planets, planets)
 
@@ -47,7 +47,7 @@ collection = my_mongo_insert(
 )
 
 # BELOW IS WHERE ALL THE REPEATED FUNCTIONS ARE CARRIED OUT
-for tick in xrange(1, 10000):
+for tick in xrange(1, 50000):
     # simulation ticks
     price_check += 1
     fuel_change += 1
@@ -72,6 +72,9 @@ for tick in xrange(1, 10000):
         # aggregates all planets sell price data and sorts it into two lists, one of every price and one of the best prices
         # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     for company in companies:
+        # if company.company_money <= -100000:
+        #     Company(elements, location_list, number_of_planets, mineral_best_sell_price, mineral_best_buy_price, planets, fuel_change, tick, company_locations[company])
+        company.remove_expenses()
         company.choose_to_improve()  # decide to improve size of spaceport or number of ships
         company.mineral_best_buy_prices = mineral_best_buy_price  # give company price data to work with
         company.mineral_best_sell_prices = mineral_best_sell_price
@@ -140,7 +143,10 @@ for tick in xrange(1, 10000):
             print "PLANET DISTANCES", company.planet_distances
             print "Company Location", company.company_locations
             print "Company Money", locale.format('%d', company.company_money, grouping=True)
-            print 'SIZE OF SPACEPORT', company.size_of_spaceport
+            print "Company Profit",  locale.format('%d', company.profit, grouping=True)
+            print "Company Spent", locale.format('%d', company.spent, grouping=True)
+            print "Company Expenses", locale.format('%d', company.expenses, grouping=True)
+            print 'SIZE OF SPACEPORT', company.number_of_spaceports
             print "NUMBER OF SHIPS", company.number_of_ships
             print ""
             print "Company Profit Potential list-", company.profit_potential

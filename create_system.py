@@ -6,16 +6,16 @@ from language import create_word
 CLIMATE_MODIFIERS = {  # used in planet class
     # climate modifier where 0, 1 and 2 of array are gas, liquid, solid respectively
     'Tropical': [1.15, 1, 1],  # higher levels of gas
-    'Oceanic': [1, 1.3, 0.8],  # higher level of liquid, less solid
+    'Oceanic': [1, 1.75, 0.8],  # higher level of liquid, less solid
     'Rocky': [1, 0.95, 1.25],  # higher level of solid, slightly less solid
     'Desert': [1, 0.5, 1.25],  # more solid, much less liquid
     'Arctic': [1, 1.05, 1],
-    'Continental': [1, 1, 1],
-    'Gas Giant': [1.4, 0.8, 0.8],  # much higher gas, less liquid, less solid
+    'Continental': [1.1, 1.1, 1],
+    'Gas Giant': [1.75, 0.8, 0.8],  # much higher gas, less liquid, less solid
     'Toxic': [1.15, 1.15, 1],  # higher gas, liquid, less solid
     'Frozen': [1, 1.25, 1],  # higher liquid
-    'Metallic': [1, 0.8, 1.3],  # much higher solid
-    'Barren': [0.8, 0.8, 1.25],  # higher solid, less gas and liquid
+    'Metallic': [1, 0.8, 1.4],  # much higher solid
+    'Barren': [0.8, 0.8, 1.3],  # higher solid, less gas and liquid
 }
 
 
@@ -82,8 +82,9 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
         # SO MANY VARIABLES!
         climate, habitable = self.create_climate()  # get planet habitability and climate
-
-        self.name = create_word(2, 3)  # creates random Planet Name
+        name = create_word(2, 3)
+        affix = self.create_planet_affix()
+        self.name = name+" "+affix  # creates random Planet Name
         self.habitable = habitable  # defines whether planet is habitable
         self.climate = climate  # based on habitability a climate is assigned
         self.location = [0, 0]  # Location not set inside class as it must be unique from other planets
@@ -112,6 +113,13 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.max_low_chance_prod = [45, 55]
         self.max_low_chance_req = [45, 55]
 
+
+    def create_planet_affix(self):
+        affix_list = ["Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota",
+                      "Kappa", "Lambda", "Xi", "Omicron", "Pi", "San", "Rho", "Sigma", "Tau", 'Upsilon']
+        affix_choice = random.choice(affix_list)
+        return affix_choice
+
     def create_pop(self):
         if self.habitable == "Habitable":
             self.population = random.randint(1000000000, 49999999999)
@@ -134,7 +142,10 @@ class Planet(object):  # Planet class creates all variables for individual plane
     def make_changes_based_on_economic(self):
         if self.economic == "Boom":
             self.max_low_chance_prod = [50, 75]
-            self.max_production = 35 + self.population / 1000000000
+            if self.habitable == "Habitable":
+                self.max_production = 35 + self.population / 2000000000
+            if self.habitable == "Inhabitable":
+                self.max_production = 35 + random.randint(1, 10)
             self.max_requirement = 35
         if self.economic == "Crash":
             self.max_low_chance_prod = [25, 50]
@@ -157,20 +168,20 @@ class Planet(object):  # Planet class creates all variables for individual plane
         # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
         if self.economic == "Steady":
             random_chance_of_change = random.randint(1, 10000)
-            if random_chance_of_change == 5000:
+            if random_chance_of_change >= 9990:
                 if random.random() > 0.50:
                     self.economic = "Boom"
                 else:
                     self.economic = "Crash"
         if self.economic == "Boom":
             random_chance_of_change = random.randint(1, 10000)
-            if random_chance_of_change == 1:
+            if random_chance_of_change <= 1:
                 self.economic = "Steady"
-            elif random_chance_of_change >= 9999:
+            elif random_chance_of_change >= 9995:
                 self.economic = "Crash"
         if self.economic == "Crash":
             random_chance_of_change = random.randint(1, 10000)
-            if random_chance_of_change <= 10:
+            if random_chance_of_change <= 5:
                 self.economic = "Steady"
             elif random_chance_of_change == 9999:
                 self.economic = "Boom"
@@ -378,13 +389,19 @@ class Planet(object):  # Planet class creates all variables for individual plane
     def remove_minerals(self, purchase):  # if planet sells minerals
         if len(purchase) > 7:
             if purchase[2] == self.name:
+                print ""
+                print self.minerals[purchase[4]][purchase[5]]
                 self.minerals[purchase[4]][purchase[5]] -= purchase[7]
                 print "success selling", self.name
+                print self.minerals[purchase[4]][purchase[5]]
 
     def buy_minerals(self, sale):  # if planet buy minerals
         if len(sale) > 0:
             if sale[2] == self.name:
+                print ""
+                print self.minerals[sale[3]][sale[4]]
                 self.minerals[sale[3]][sale[4]] += sale[6]
+                print self.minerals[sale[3]][sale[4]]
                 print "success buying", self.name
 
 
@@ -533,8 +550,8 @@ class Company(object):  # Company class creates all variables for individual pla
         self.name = self.create_company_name()
         self.company_locations = company_location
         self.planet_distances = self.find_planet_distances()
-        self.company_money = 100000  # variables needs to be preserved each loop so declared here
-        self.size_of_spaceport = 1  # 1 represents 10 active trades possible at any one time for both purchase and sale
+        self.company_money = 1000000  # variables needs to be preserved each loop so declared here
+        self.number_of_spaceports = 1  # 1 represents 10 active trades possible at any one time for both purchase and sale
         self.number_of_ships = 10  # this represents the size/amount of ships and goods that can be transported in one trip
         self.profit_potential = self.evaluate_planet_prices()
         self.total_fuel_cost = self.calculate_fuel_cost()
@@ -548,6 +565,11 @@ class Company(object):  # Company class creates all variables for individual pla
         self.sell_list = []
         self.purchase = self.decide_to_buy()
         self.sale = self.sell_minerals()
+        self.profit = 0
+        self.spent = 0
+        self.expenses = 0
+        self.stocks = 1000000
+        self.stock_price = 0
 
     def create_company_name(self):
         named_or_abbrv = random.randint(1, 2)
@@ -608,15 +630,26 @@ class Company(object):  # Company class creates all variables for individual pla
         return total_fuel_cost
 
     def choose_to_improve(self):
-
-        if self.company_money >= 10000000:
-            if self.number_of_ships <= self.size_of_spaceport*10:
+        if self.company_money >= 10000000:  # if company has 10 million
+            if self.number_of_ships < self.number_of_spaceports*10:  # And spaceport size has increased
                 self.number_of_ships += 1
-                self.company_money -= 1000000
-        if self.company_money >= 50000000:
-            if self.size_of_spaceport <= 10:
-                self.size_of_spaceport += 1
+                self.company_money -= 1000000  # will spend 1 million on  a ship
+        if self.company_money >= 50000000:  # if money above 50 million
+            if self.number_of_spaceports < 50:
+                self.number_of_spaceports += 1
                 self.company_money -= 10000000
+
+    def remove_expenses(self):
+        spaceport_expenses = 10*self.number_of_spaceports
+        ship_expenses = 1*self.number_of_ships*(len(self.trade_list)+len(self.sell_list))
+        self.company_money -= ship_expenses
+        self.company_money -= spaceport_expenses
+        self.profit -= ship_expenses + spaceport_expenses
+        self.spent -= ship_expenses + spaceport_expenses
+        self.expenses = ship_expenses + spaceport_expenses
+
+    def stock_prices(self):
+        self.stock_price = self.profit / self.stocks
 
     def take_cost_of_fuel_per_unit(self):
 
@@ -665,8 +698,8 @@ class Company(object):  # Company class creates all variables for individual pla
 
     def decide_to_buy(self):
         purchase = self.most_profitable_mineral()
-        if len(self.trade_list) <= self.size_of_spaceport*10:
-            if self.company_money <= 100000000:
+        if len(self.trade_list) <= self.number_of_spaceports*10:
+            if self.company_money <= 10000000000:
                 if (self.company_money / 2) >= 5000:  # If the company has at least a 1000 credits, it will spend money
 
                     amount_to_spend = self.company_money / 2  # company wont spend over half its money in one turn
@@ -674,26 +707,27 @@ class Company(object):  # Company class creates all variables for individual pla
 
                     amount_of_minerals_can_buy = 0
 
-                    if purchase[0] > 0:  # <----- THIS BREAKS OCCASIONALLY??
+                    if purchase[0] > 0:  # if price is above zero an amount can be calculated
                         amount_of_minerals_can_buy = amount_to_spend / purchase[0]  # divide total money over cost of minerals
                         amount_of_minerals_can_buy = floor(amount_of_minerals_can_buy)  # round number down
                         amount_of_minerals_can_buy = int(round(amount_of_minerals_can_buy))  # convert to int
 
-                    if amount_of_minerals_can_buy >= 10:
-                        amount_of_minerals_can_buy = 10  # add limit to purchase number
+                    if amount_of_minerals_can_buy >= self.number_of_ships:
+                        amount_of_minerals_can_buy = self.number_of_ships  # add limit to purchase number
 
                     purchase.append(amount_of_minerals_can_buy)  # finalise purchase by adding amount of minerals
                     trade_timer = purchase[3]+self.tick  # sets a finish date for the purchase in ticks
                     purchase.append(trade_timer)
                     # pay the cost of the minerals
                     fuel_cost = 0
-                    for planet in xrange(0, self.number_of_planets):
+                    for planet in xrange(0, self.number_of_planets):  # calculate fuel cost
                         if purchase[2] == self.total_fuel_cost[planet][1]:
                             fuel_cost = self.total_fuel_cost[planet][0]
-                    self.company_money -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)
-                    # self.company_minerals[purchase[4]][purchase[5]] += purchase[7]
 
-                    if purchase[7] > 0:
+                    if purchase[7] > 0:  # if a purchase is being made
+                        self.company_money -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)  # remove company money
+                        self.spent -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)  # remove company money from spent
+                        self.profit -= (purchase[7] * purchase[0]) + (purchase[7] * fuel_cost)  # remove company money from profit
                         self.trade_list.append(purchase)  # create a list of all trades
                         self.minerals_in_transit_bought[purchase[4]][purchase[5]] += purchase[7]
 
@@ -738,7 +772,7 @@ class Company(object):  # Company class creates all variables for individual pla
         sale = 'No Sale'
         travel_time = 0
         planets_buy_prices = self.take_cost_of_fuel_per_unit_sale()
-        if len(self.sell_list) <= (self.size_of_spaceport*10):
+        if len(self.sell_list) <= (self.number_of_spaceports*10):
             for mineral_group in xrange(0, 3):  # loop through mineral group
                 for mineral in xrange(0, 10):  # loop through minerals
                     if self.company_minerals[mineral_group][mineral] > 0:
@@ -776,6 +810,8 @@ class Company(object):  # Company class creates all variables for individual pla
                 if self.tick >= self.sell_list[trades][7]:  # if current tick matches tick + Travel Time
                     # complete transaction by adding money made once goods have reached destination
                     self.company_money += self.sell_list[trades][0] * self.sell_list[trades][6]  # profit is price sold * amount
+                    self.profit += self.sell_list[trades][0] * self.sell_list[trades][6]  # profit is price sold * amount
+                    # once profit goes in, amount spent has already been removed so figure should be correctly calculated
                     # removes minerals from Transit list.
                     self.minerals_in_transit_sell[self.sell_list[trades][3]][self.sell_list[trades][4]] -= self.sell_list[trades][6]
                     finished_trades.append(trades)  # create a list of all trades that were finished
