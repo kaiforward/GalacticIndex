@@ -6,12 +6,12 @@ from language import create_word
 CLIMATE_MODIFIERS = {  # used in planet class
     # climate modifier where 0, 1 and 2 of array are gas, liquid, solid respectively
     'Tropical': [1.15, 1, 1],  # higher levels of gas
-    'Oceanic': [1, 1.75, 0.8],  # higher level of liquid, less solid
+    'Oceanic': [1, 1.5, 0.8],  # higher level of liquid, less solid
     'Rocky': [1, 0.95, 1.25],  # higher level of solid, slightly less solid
     'Desert': [1, 0.5, 1.25],  # more solid, much less liquid
     'Arctic': [1, 1.05, 1],
     'Continental': [1.1, 1.1, 1],
-    'Gas Giant': [1.75, 0.8, 0.8],  # much higher gas, less liquid, less solid
+    'Gas Giant': [1.5, 0.8, 0.8],  # much higher gas, less liquid, less solid
     'Toxic': [1.15, 1.15, 1],  # higher gas, liquid, less solid
     'Frozen': [1, 1.25, 1],  # higher liquid
     'Metallic': [1, 0.8, 1.4],  # much higher solid
@@ -82,7 +82,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
         # SO MANY VARIABLES!
         climate, habitable = self.create_climate()  # get planet habitability and climate
-        name = create_word(2, 3)
+        name = create_word(3, 3)
         affix = self.create_planet_affix()
         self.name = name+" "+affix  # creates random Planet Name
         self.habitable = habitable  # defines whether planet is habitable
@@ -574,7 +574,16 @@ class Company(object):  # Company class creates all variables for individual pla
     def create_company_name(self):
         named_or_abbrv = random.randint(1, 2)
         company_letters = string.ascii_uppercase
-        company_affix = ['Mogul', 'Enterprise', 'Company', 'Galactic', 'Universal', 'Nebulae', 'Binary', ]
+        company_affix = ['Mogul',
+                         'Enterprise',
+                         'Company',
+                         'Galactic',
+                         'Universal',
+                         'Express',
+                         'Binary',
+                         "Associates",
+                         'Celestial',
+                         'Cosmic',]
         letters = random.randint(2, 3)
         abbreviated = ""
 
