@@ -25,7 +25,9 @@ def my_mongo_insert(
         mineral_best_sell_price,
         mineral_high_buy_price,
         mineral_best_buy_price,
-        companies):
+        companies,
+        elements,
+        elements_rarity):
 
     collection = open_collection()
     collection.drop()  # remove the collection
@@ -78,6 +80,8 @@ def my_mongo_insert(
     # NEED TO WORK OUT HOW TO ORDER THE SELL DATA PERHAPS USING SORT(), IT ONLY NEEDS ORDERING FOR VIEWERS LEGIBILITY
     insert_high_low_prices = [
         {"Name": "Collator",
+         "Elements": elements,
+         "Elements Rarity": elements_rarity,
          "Low Prices Gas": mineral_low_sell_price[0],
          "Low Prices Liquid": mineral_low_sell_price[1],
          "Low Prices Solid": mineral_low_sell_price[2],
@@ -103,7 +107,9 @@ def my_mongo_update(
         mineral_high_buy_price,
         mineral_best_buy_price,
         collection,
-        companies):
+        companies,
+        elements,
+        elements_rarity):
     # MY MONGO UPDATE CALLED EVERY TICK TO UPDATE NEW PLANET VALUES.
     # CREATE UPDATE
     for planet in xrange(0, number_of_planets):
@@ -149,7 +155,9 @@ def my_mongo_update(
         collection.update(update_company_selector, update_company)
 
     update_best_prices_selector = {"Name": "Collator"}
-    update_best_prices_info = {"$set": {"Low Prices Gas": mineral_low_sell_price[0],
+    update_best_prices_info = {"$set": {"Elements": elements,
+                                        "Elements Rarity": elements_rarity,
+                                        "Low Prices Gas": mineral_low_sell_price[0],
                                         "Low Prices Liquid": mineral_low_sell_price[1],
                                         "Low Prices Solid": mineral_low_sell_price[2],
                                         "Best low prices Gas": mineral_best_sell_price[0],

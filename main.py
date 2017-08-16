@@ -43,7 +43,9 @@ collection = my_mongo_insert(
     mineral_best_sell_price,
     mineral_high_buy_price,
     mineral_best_buy_price,
-    companies
+    companies,
+    elements,
+    elements_rarity
 )
 
 # BELOW IS WHERE ALL THE REPEATED FUNCTIONS ARE CARRIED OUT
@@ -181,7 +183,9 @@ for tick in xrange(1, 50000):
                     mineral_high_buy_price,
                     mineral_best_buy_price,
                     collection,
-                    companies
+                    companies,
+                    elements,
+                    elements_rarity
                     )
 
 
