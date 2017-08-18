@@ -197,7 +197,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         # defines the maximum low chance and high chance of planet minerals changing. so 90 sort of equates to 90% percent chance
         if self.economic == "Steady":
             random_chance_of_change = random.randint(1, 10000)
-            if random_chance_of_change >= 9990:
+            if random_chance_of_change >= 9995:
                 if random.random() > 0.50:
                     self.economic = "Boom"
                 else:
@@ -594,7 +594,7 @@ class Company(object):  # Company class creates all variables for individual pla
         self.sell_list = []
         self.purchase = self.decide_to_buy()
         self.sale = self.sell_minerals()
-        self.profit = 0
+        self.profit = -self.company_money
         self.spent = 0
         self.expenses = 0
         self.stocks = 1000000
