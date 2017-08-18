@@ -1,7 +1,7 @@
 import random
 import string
 from math import floor
-from language import create_word
+from language import create_word, word_creator
 
 CLIMATE_MODIFIERS = {  # used in planet class
     # climate modifier where 0, 1 and 2 of array are gas, liquid, solid respectively
@@ -16,6 +16,21 @@ CLIMATE_MODIFIERS = {  # used in planet class
     'Frozen': [1, 1.25, 1],  # higher liquid
     'Metallic': [1, 0.8, 1.4],  # much higher solid
     'Barren': [0.8, 0.8, 1.3],  # higher solid, less gas and liquid
+}
+
+CLIMATE_LIFE_MODIFIERS = {
+    # climate modifier where 0, 1 and 2 of array are land, plant and sea life
+    'Tropical': [3, 1.2, 1.2],  # higher levels of gas
+    'Oceanic': [0.5, 0.5, 4],  # higher level of liquid, less solid
+    'Rocky': [1.2, 0.95, 0.5],  # higher level of solid, slightly less solid
+    'Desert': [1, 0.5, 0.1],  # more solid, much less liquid
+    'Arctic': [1, 1.05, 1],
+    'Continental': [2, 2, 2],
+    'Gas Giant': [0, 0, 0],  # much higher gas, less liquid, less solid
+    'Toxic': [0, 0, 0],  # higher gas, liquid, less solid
+    'Frozen': [0, 0, 0],  # higher liquid
+    'Metallic': [0, 0, 0],  # much higher solid
+    'Barren': [0, 0, 0],  # higher solid, less gas and liquid
 }
 
 
@@ -82,7 +97,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
 
         # SO MANY VARIABLES!
         climate, habitable = self.create_climate()  # get planet habitability and climate
-        name = create_word(3, 3)
+        name = word_creator(random.randint(1, 3))
         affix = self.create_planet_affix()
         self.name = name+" "+affix  # creates random Planet Name
         self.habitable = habitable  # defines whether planet is habitable
@@ -90,6 +105,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         self.location = [0, 0]  # Location not set inside class as it must be unique from other planets
         self.economic = "Steady"
         self.population = 0  # needs to know Habitability
+        self.planet_features = self.planet_features()
         # these variables are stored this way as they need to hold the same values from the previous iteration of the functions
         # they all relate to planet minerals, their use, creation, prices to buy/sell and some info on that change
         self.minerals = [[0]*10, [0]*10, [0]*10]
@@ -124,7 +140,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         if self.habitable == "Habitable":
             self.population = random.randint(1000000000, 49999999999)
         if self.habitable == "Inhabitable":
-            self.population = random.randint(1000000, 99999999)
+            self.population = random.randint(100000, 1000000)
 
     def create_climate(self):
         # RANDOMLY DECIDES WHETHER PLANET IS HABITABLE, IF IT IS HABITABLE IT CHOOSES WHAT CLIMATE IT IS
@@ -139,6 +155,18 @@ class Planet(object):  # Planet class creates all variables for individual plane
             current_habitable = "Inhabitable"
         return current_climate, current_habitable
 
+    def planet_features(self):
+        animal_species = 0
+        plant_species = 0
+        sea_species = 0
+        planet_features = [animal_species, plant_species, sea_species]
+        current_climate = self.climate
+        climate_life_modifier = CLIMATE_LIFE_MODIFIERS[current_climate]  # use dict
+        for species_group in xrange(0, 3):
+            planet_features[species_group] = random.randint(10000, 5000000) * climate_life_modifier[species_group]
+            planet_features[species_group] = int(round(planet_features[species_group]))
+        return planet_features
+
     def make_changes_based_on_economic(self):
         if self.economic == "Boom":
             self.max_low_chance_prod = [50, 75]
@@ -146,9 +174,10 @@ class Planet(object):  # Planet class creates all variables for individual plane
                 self.max_production = 35 + self.population / 2000000000
             if self.habitable == "Inhabitable":
                 self.max_production = 35 + random.randint(1, 10)
-            self.max_requirement = 35
+            self.max_requirement = 35 + self.population / 4000000000
         if self.economic == "Crash":
             self.max_low_chance_prod = [25, 50]
+            self.max_low_chance_req = [50, 75]
             self.max_production = 20
             self.max_requirement = 35
         if self.economic == "Steady":
@@ -198,7 +227,7 @@ class Planet(object):  # Planet class creates all variables for individual plane
         all_minerals_rarity = [gas_rarity, liquid_rarity, solid_rarity]
 
         # finds the planet climate and adds a climate modifier to results of mineral production
-        # there maybe a better way of doing this??? PUT INTO DICTIONARY
+        # there maybe a better way of doing this??? PUT INTO DICTIONARY...DONE!
         current_climate = self.climate
         climate_modifier = CLIMATE_MODIFIERS[current_climate]
 
@@ -425,7 +454,7 @@ class Elements(object):
         for x7 in xrange(0, 3):  # this iterates through the three types of element
             current_element = all_elements[x7]
             for x4 in xrange(0, 10):  # this iterates through each 10 elements of planet type
-                current_prefix = create_word(1, 1)
+                current_prefix = word_creator(1)
                 current_suffix = element_suffix[x7]
                 current_element[x4] = current_prefix
                 current_element[x4] += random.choice(current_suffix)
@@ -583,12 +612,14 @@ class Company(object):  # Company class creates all variables for individual pla
                          'Binary',
                          "Associates",
                          'Celestial',
-                         'Cosmic',]
+                         'Cosmic',
+                         'Brothers',
+                         'Sisters',]
         letters = random.randint(2, 3)
         abbreviated = ""
 
         if named_or_abbrv == 1:
-            company_name = create_word(2, 3)  # use same word function to create
+            company_name = word_creator(1)  # use same word function to create
             company_name += " "
             company_name += random.choice(company_affix)
             return company_name
@@ -649,16 +680,16 @@ class Company(object):  # Company class creates all variables for individual pla
                 self.company_money -= 10000000
 
     def remove_expenses(self):
-        spaceport_expenses = 10*self.number_of_spaceports
-        ship_expenses = 1*self.number_of_ships*(len(self.trade_list)+len(self.sell_list))
-        self.company_money -= ship_expenses
-        self.company_money -= spaceport_expenses
-        self.profit -= ship_expenses + spaceport_expenses
-        self.spent -= ship_expenses + spaceport_expenses
-        self.expenses = ship_expenses + spaceport_expenses
+        spaceport_expenses = 10*self.number_of_spaceports  # calculate money for spaceports
+        ship_expenses = 1*self.number_of_ships*(len(self.trade_list)+len(self.sell_list))  # calculate money for active ships
+        self.company_money -= ship_expenses  # remove money
+        self.company_money -= spaceport_expenses  # remove money
+        self.profit -= ship_expenses + spaceport_expenses  # remove expenses from profit
+        self.spent -= ship_expenses + spaceport_expenses  # add to total spent
+        self.expenses = ship_expenses + spaceport_expenses  # total expenses that turn to be sent to db
 
     def stock_prices(self):
-        self.stock_price = self.profit / self.stocks
+        self.stock_price = self.profit / self.stocks  # stock price is equal to profit made divided by number of stocks
 
     def take_cost_of_fuel_per_unit(self):
 

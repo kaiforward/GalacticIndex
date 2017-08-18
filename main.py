@@ -60,7 +60,7 @@ for tick in xrange(1, 50000):
         planets[planet].find_mineral_need()  # finds out what minerals a planet needs
         planets[planet].find_price(elements_rarity)  # Calculates the buy and sell price of each mineral on a planet
         planets[planet].find_max_prices()  # finds the highs and lows of the buy and sell prices.
-        if price_check >= 100:  # resets max price every 500 ticks, so max price is for example that days changes.
+        if price_check >= 500:  # resets max price every 500 ticks, so max price is for example that days changes.
             for planet2 in xrange(0, number_of_planets):  # RESET FOR EVERY PLANET
                 planets[planet2].reset_max_prices()
                 price_check = 0
@@ -115,6 +115,7 @@ for tick in xrange(1, 50000):
             print "Climate -", planet.climate
             print "Economic Status -", planet.economic
             print "Population      -", locale.format('%d', planet.population, grouping=True)
+            print "planet features", planet.planet_features
             print "Max Production  -", planet.max_production
             print "Max Requirement -", planet.max_requirement
             print "Max/min possible chance prod", planet.max_low_chance_prod
