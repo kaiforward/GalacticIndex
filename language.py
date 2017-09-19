@@ -1,7 +1,6 @@
 import random
 
 
-# discovered classmethod! made these class methods because they are used in 3 other classes, yay!
 def get_language():
     # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
     lines = []
@@ -11,7 +10,6 @@ def get_language():
     return lines
 
 
-# discovered classmethod! made these class methods because they are used in 3 other classes, yay!
 def get_language2():
     # IMPORTS MY LANGUAGE TEXT FILE WHICH CONTAINS A LIST OF FICTIONAL "VERBS"
     lines = []
@@ -54,12 +52,12 @@ def word_creator(number_of_words):
         shorter_word = random.choice(prefix_list) + random.choice(connecting_letters)
         long_word = random.choice(prefix_list) + random.choice(affix_list_vowels)
         longest_word = random.choice(prefix_list) + random.choice(connecting_letters) + random.choice(affix_list_consonant)
-        words = [short_word, shorter_word, long_word, longest_word]
+        words = [short_word, shorter_word, long_word, longest_word, longest_word]
         chosen_word = random.choice(words)
         sentence += chosen_word+" "
     sentence = sentence[:-1]
     return sentence
 
 sentence = word_creator(10)
-print sentence+" TRANSLATION: Thankyou Human, you have created us. :)"
+print sentence+" TRANSLATION: Thank you Human, you have created us. :)"
 
