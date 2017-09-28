@@ -21,9 +21,10 @@ zark
 zaph
 bork
 bog
-brub
-brob
-blob
+vorp
+lorp
+mim
+lua
 connecting letters --------
 a
 e
